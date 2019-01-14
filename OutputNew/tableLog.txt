@@ -1,5 +1,0 @@
-Tue Jan  8 18:28:44 2019 
-Running on 32 proc(s). 
-Setup time: 21.12 seconds
------------------------- 
-Time		 Step	 Stopwatch

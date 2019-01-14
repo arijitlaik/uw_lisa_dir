@@ -1,2 +1,0 @@
-#z1p iniResZ newResZp1 newResZp2 x1p x2p iniResX newResXp1 newResXp2_1 newResXp2_2
-150 23.77 5.00 29.89   3800   5700 19.46 7.00 29.90 29.88
