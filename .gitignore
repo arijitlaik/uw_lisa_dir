@@ -1,0 +1,10 @@
+*.xmf
+*.xdmf
+*.gldb
+*.ipynb
+*.h5
+*.png
+*.log
+.DS_Store
+*.pyc
+*.out
