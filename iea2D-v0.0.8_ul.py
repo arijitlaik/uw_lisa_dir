@@ -1095,3 +1095,67 @@ while step < maxSteps:
 
 # uw.timing.print_table(output_file=outputDir+'/Time.Log')
 # Testing Block
+
+
+import matplotlib.pyplot as plt
+plt.scatter(slabshapes[:][0], slabshapes[:][1])
+
+
+slabCoords = np.unique(np.concatenate(np.array(slabshapes)[:, :, :]), axis=0)
+indCoords = np.unique(np.concatenate(np.array(indentorshapes)[:, :, :]), axis=0)
+%matplotlib
+plt.scatter(slabCoords[:, 0], slabCoords[:, 1],c=slabCoords[:, 1]+slabCoords[:, 0])
+plt.plot(slabCoords[:, 0], slabCoords[:, 1])
+plt.scatter(indCoords[:, 0], indCoords[:, 1])
+plt.plot(indCoords[:, 0], indCoords[:, 1])
+plt.axis('equal')
+plt.tight_layout()
+inEp = np.split(indCoords, 2)
+inEp
+# inR = np.flip(inR)
+for l,r in zip(inEp[0],np.flip(inEp[1],0)):
+    print(l,r)
+
+!ls
+
+
+plt.plot(inR[:, 0], inR[:, 1])
+plt.plot(inL[:, 0], inL[:, 1])
+
+plt.plot(opRL[0:, 0])
+plt.plot(opRL[1])
+
+indentorshapes = make_Indentor2d(
+    startX=nd(0.3 * modelHeight),
+    topY=nd(0.0 * u.kilometer),
+    length=nd(0.85 * modelHeight),
+    taper=18,
+    thicknessArray=[
+        nd(15.0 * u.kilometer),
+        nd(15.0 * u.kilometer),
+        nd(30.0 * u.kilometer),
+        nd(50.0 * u.kilometer),
+    ],  # UL
+    taper2=12,
+)
+slabshapes = make_slab2d(
+    topX=nd(0.725 * modelHeight),
+    topY=0.0,
+    length=nd(1.275 * modelHeight),
+    taper=15,
+    dip=29,
+    depth=nd(120.0 * u.kilometer),
+    thicknessArray=[
+        nd(15.0 * u.kilometer),
+        nd(15.0 * u.kilometer),
+        nd(30.0 * u.kilometer),
+        nd(30.0 * u.kilometer),
+    ],  # thic
+)
+plt.rcParams['figure.figsize'] = [25, 4]
+slabCoords = np.unique(np.concatenate(np.array(slabshapes)[:, :, :]), axis=0)
+indCoords = np.unique(np.concatenate(np.array(indentorshapes)[:, :, :]), axis=0)
+spPoints=np.concatenate((slabCoords,indCoords),axis=0)
+slabCoords=spPoints
+plt.scatter(slabCoords[:, 0], slabCoords[:, 1],c=slabCoords[:, 1]+slabCoords[:, 0])
+plt.tight_layout()
