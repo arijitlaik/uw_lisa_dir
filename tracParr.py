@@ -27,7 +27,7 @@ print("before run:, ", uw.rank(), coordsGlobal)
 uw.barrier()
 
 coordsLocal = (
-    (get_coords.evaluate(lonelySwarm)[0][0], get_coords.evaluate(lonelySwarm)[0][1])
+    get_coords.evaluate(lonelySwarm)[0].tolist()
     if get_coords.evaluate(lonelySwarm) is not None
     else None
 )
@@ -36,21 +36,21 @@ uw.barrier()
 print(uw.rank(), coordsLocal, lonelySwarm.particleCoordinates.data.shape)
 
 coordsGlobal = np.array(comm.gather(coordsLocal, root=0))
-
+# coordsGlobal = comm.gather(coordsLocal, root=0)
 uw.barrier()
 
 
 # print("After run:, ", uw.rank(), coordsGlobal)
 if uw.rank() == 0:
     print("After run: ", uw.rank(), coordsGlobal)
-    fh = open("./coor.log", "w+")
-    coordsGlobal = np.delete(coordsGlobal, np.where(coordsGlobal is None))
-    print("After fliter: ", uw.rank(), coordsGlobal)
-
+    coordsGlobal = np.delete(coordsGlobal, np.where(coordsGlobal == None))
+    coordsGlobal = np.array(list(coordsGlobal), dtype=np.float)
     print("-------------------------")
-    np.savetxt("coordsGlobal.dat", coordsGlobal, "%s")
+    print("After fliter: Rank {0},\nArray:{1} ".format(uw.rank(), coordsGlobal))
+    print("-------------------------")
+    np.savetxt("coordsGlobal.dat", coordsGlobal, delimiter=';')
     np.save("coordsGlobal.npy", coordsGlobal)
-    fh.close()
+
 uw.barrier()
 #
 # lonelySwarm.particleCoordinates.data[0]
