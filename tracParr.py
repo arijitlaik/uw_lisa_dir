@@ -7,7 +7,7 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-
+# pintudas1204@gmail.com
 fn = uw.function
 
 mesh = uw.mesh.FeMesh_Cartesian(elementRes=(64, 64))
@@ -52,15 +52,15 @@ if uw.rank() == 0:
     np.save("coordsGlobal.npy", coordsGlobal)
 
 uw.barrier()
-#
+
 # lonelySwarm.particleCoordinates.data[0]
-# try:
-#     lonelySwarm.particleCoordinates.data[0]
-# except IndexError:
-#     print("Lonely swarm is not at Processor-{0:d}".format(uw.rank()))
-# else:
-#     print(
-#         "The lonely swarm is at Processor {0:d} and is sitting at {1}".format(
-#             uw.rank(), lonelySwarm.particleCoordinates.data[0]
-#         )
-#     )
+try:
+    lonelySwarm.particleCoordinates.data[0]
+except IndexError:
+    print("Lonely swarm is not at Processor-{0:d}".format(uw.rank()))
+else:
+    print(
+        "The lonely swarm is at Processor {0:d} and is sitting at {1}".format(
+            uw.rank(), lonelySwarm.particleCoordinates.data[0]
+        )
+    )
