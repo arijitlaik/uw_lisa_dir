@@ -17,6 +17,7 @@ import numpy as np
 
 # import json
 
+
 #
 # Logging, output path and restarting stuff
 #
@@ -63,8 +64,14 @@ else:
 
 maxSteps = step + 3000
 steps_output = 10
+timingFlag = uw.__version__.find("2.5") == -1 or uw.__version__.find("2.6") == -1
 
-# uw.timing.start()
+timingFlag
+if timingFlag:
+    # print("Timing Enabled")
+    uw.timing.start()
+
+
 
 if uw.rank() == 0:
     if clearLog:
@@ -1079,8 +1086,9 @@ while step < maxSteps:
         # print step
         # print dt
         # print time
-        # uw.timing.print_table(output_file=outputDir+'/uwTimer.log')
-        # uw.timing.start()
+        if timingFlag:
+            uw.timing.print_table(output_file=outputDir+'/uwTimer.log')
+            uw.timing.start()
 
         print(stepLog)
         logFile.write(stepLog)
@@ -1104,7 +1112,7 @@ plt.scatter(slabshapes[:][0], slabshapes[:][1])
 slabCoords = np.unique(np.concatenate(np.array(slabshapes)[:, :, :]), axis=0)
 indCoords = np.unique(np.concatenate(np.array(indentorshapes)[:, :, :]), axis=0)
 %matplotlib
-plt.scatter(slabCoords[:, 0], slabCoords[:, 1],c=slabCoords[:, 1]+slabCoords[:, 0])
+plt.scatter(slabCoords[:, 0], slabCoords[:, 1], c=slabCoords[:, 1]+slabCoords[:, 0])
 plt.plot(slabCoords[:, 0], slabCoords[:, 1])
 plt.scatter(indCoords[:, 0], indCoords[:, 1])
 plt.plot(indCoords[:, 0], indCoords[:, 1])
@@ -1113,8 +1121,8 @@ plt.tight_layout()
 inEp = np.split(indCoords, 2)
 inEp
 # inR = np.flip(inR)
-for l,r in zip(inEp[0],np.flip(inEp[1],0)):
-    print(l,r)
+for l, r in zip(inEp[0], np.flip(inEp[1], 0)):
+    print(l, r)
 
 !ls
 
@@ -1155,7 +1163,7 @@ slabshapes = make_slab2d(
 plt.rcParams['figure.figsize'] = [25, 4]
 slabCoords = np.unique(np.concatenate(np.array(slabshapes)[:, :, :]), axis=0)
 indCoords = np.unique(np.concatenate(np.array(indentorshapes)[:, :, :]), axis=0)
-spPoints=np.concatenate((slabCoords,indCoords),axis=0)
-slabCoords=spPoints
-plt.scatter(slabCoords[:, 0], slabCoords[:, 1],c=slabCoords[:, 1]+slabCoords[:, 0])
+spPoints = np.concatenate((slabCoords, indCoords), axis=0)
+slabCoords = spPoints
+plt.scatter(slabCoords[:, 0], slabCoords[:, 1], c=slabCoords[:, 1]+slabCoords[:, 0])
 plt.tight_layout()
