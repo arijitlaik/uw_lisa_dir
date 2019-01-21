@@ -1,7 +1,7 @@
 *.xmf
 *.xdmf
 *.gldb
-*.ipynb
+*.ipynb_che*
 *.h5
 *.png
 *.log
