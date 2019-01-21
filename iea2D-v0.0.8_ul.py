@@ -1159,3 +1159,36 @@ while step < maxSteps:
 # slabCoords = spPoints
 # plt.scatter(slabCoords[:, 0], slabCoords[:, 1], c=slabCoords[:, 1]+slabCoords[:, 0])
 # plt.tight_layout()
+if uw.nProcs()==1:
+    import matplotlib.pyplot as plt
+    %matplotlib inline
+    plt.rcParams['figure.figsize'] = [18, 4]
+
+tracerSwarm=uw.swarm.Swarm(mesh=mesh)
+slabshapes=np.array(slabshapes)
+slabInCoords= np.array(slabshapes)[:,0:4]
+slablast=np.insert(slabshapes[-1][:3:-1],0,slabshapes[-1][0],axis=0)
+slabInCoords=np.insert(slabInCoords,-1,slablast,axis=0)
+coors=np.array([])
+for x in slabInCoords:
+    plt.scatter(x[:,0],x[:,1])
+    xs=np.linspace(np.min(x[:,0]),np.max(x[:,0]),1000)
+    ys=np.interp(xs,x[:,0],x[:,1])
+    if uw.nProcs()==1:
+        plt.scatter(xs,ys,s=1,c=xs*ys)
+    tracerSwarm.add_particles_with_coordinates(np.column_stack((xs,ys)))
+last=np.array(slabshapes)[-1,0:-3]
+indCoords = np.unique(np.concatenate(np.array(indentorshapes)[:, :, :]), axis=0)
+inEp = np.split(indCoords, 2)
+i=0
+for l,r in zip(inEp[0],np.flip(inEp[1],0)):
+    i+=1
+    print(i)
+    xyS=np.stack((np.linspace(l[0],r[0],1000),np.full((1000,),l[1])), axis=-1)
+    if uw.nProcs()==1:
+        plt.scatter(xyS[:,0],xyS[:,1],s=1,c=xyS[:,0]*xyS[:,1])
+    tracerSwarm.add_particles_with_coordinates(xyS)
+
+
+tracerSwarm.add_particles_with_coordinates(np.column_stack((np.linspace(inEp[0][0][0],inEp[0][-1][0],500),np.linspace(inEp[0][0][1],inEp[0][-1][1],500))))
+tracerSwarm.add_particles_with_coordinates(np.column_stack((np.linspace(inEp[1][0][0],inEp[1][-1][0],500),np.linspace(inEp[1][0][1],inEp[1][-1][1],500))))
