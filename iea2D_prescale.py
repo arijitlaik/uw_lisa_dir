@@ -14,7 +14,9 @@ import sys
 
 import underworld as uw
 from underworld import function as fn
-import scaling as sca
+
+from underworld.scaling import units as u
+from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
 
 import glucifer
 
@@ -31,7 +33,7 @@ import numpy as np
 #
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
-outputDirName = "2x12_4-00175_THSC_uw27"
+outputDirName = "2x12_4-00175_THSC_uw27_nsc"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -95,7 +97,6 @@ uw.barrier()
 #
 
 # Dimentional Parameters
-u = sca.UnitRegistry
 modelHeight = 2880.0 * u.kilometer
 # plateHeight = 120. * u.kilometer
 refDensity = 3200.0 * u.kilogram / u.meter ** 3
@@ -114,12 +115,13 @@ K_v = K_tau * modelHeight / K_eta
 Kt = K_eta / K_tau
 KM = K_tau * modelHeight * Kt ** 2
 
-sca.scaling["[length]"] = KL.to_base_units()
-# sca.scaling["[temperature]"] = KT.to_base_units()
-sca.scaling["[time]"] = Kt.to_base_units()
-sca.scaling["[mass]"] = KM.to_base_units()
-nd = sca.nonDimensionalize
-dm = sca.Dimensionalize
+scaling_coefficients = uw.scaling.get_coefficients()
+
+scaling_coefficients["[length]"] = KL.to_base_units()
+# scaling_coefficients["[temperature]"] = KT.to_base_units()
+scaling_coefficients["[time]"] = Kt.to_base_units()
+scaling_coefficients["[mass]"] = KM.to_base_units()
+
 
 #
 # Res and Timing
@@ -844,7 +846,7 @@ densityFn = fn.branching.map(fn_key=materialVariable, mapping=densityMap)
 z_hat = (0.0, -1.0)
 buoyancyFn = densityFn * z_hat * nd(gravity)
 
-sf = sca.Dimensionalize(1.0, 1.0 * u.kilogram / u.meter ** 3)
+sf = dm(1.0, 1.0 * u.kilogram / u.meter ** 3)
 
 figDensity = glucifer.Figure(
     store, figsize=figSize, name="Density Map", boundingBox=bBox
