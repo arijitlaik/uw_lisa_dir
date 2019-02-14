@@ -360,6 +360,19 @@ def checkpoint(step, time):
         "mesh",
         modeltime=time,
     )
+    tswarmHnd = tracerSwarm.save(outputDir + "tswarm." + str(step).zfill(5) + ".h5")
+    tincordHnd= tincord.save(
+        outputDir + "tcord." + str(step).zfill(5) + ".h5"
+    )
+
+    tincord.xdmf(
+        outputDir + "tcord." + str(step).zfill(5) + ".xdmf",
+        tincordHnd,
+        "tcord.",
+        tswarmHnd,
+        "tswarm",
+        modeltime=time,
+    )
     uw.barrier()
     # Write checkpoint log only after files have been generated
     if uw.rank() == 0:
@@ -509,7 +522,7 @@ overRidingShapesForeArc = make_overRidingPlate2d(
     topX=mesh.maxCoord[0] - mesh.minCoord[0],
     topY=nd(0.0 * u.kilometer),
     length=-nd(2.0 * modelHeight),
-    taper=15,
+    taper=90,
     dip=29,
     thicknessArray=[nd(40.0 * u.kilometer), nd(80.0 * u.kilometer)],
 )
@@ -522,6 +535,8 @@ overRidingShapes = make_overRidingPlate2d(
     dip=90,
     thicknessArray=[nd(40.0 * u.kilometer), nd(80.0 * u.kilometer)],
 )
+overRidingShapesForeArc
+overRidingShapes
 # define the viscosity Range
 viscRange = [1.0, 1e5]
 
@@ -1053,18 +1068,13 @@ def model_update():
 #
 # swarmDict = {'materials': materialVariable,
 #             'viscosity': swarmviscosityVar}
-# if restartFlag is False:
-#     checkpoint(step=0, time=dm(time, 1.0 * u.megayear).magnitude)
 
 
 
 # In[3]:
 
 
-if uw.nProcs()==1:
-    import matplotlib.pyplot as plt
-    get_ipython().magic(u'matplotlib inline')
-    plt.rcParams['figure.figsize'] = [40, 4]
+
 
 tracerSwarm=uw.swarm.Swarm(mesh=mesh)
 slabshapes=np.array(slabshapes)
@@ -1073,12 +1083,8 @@ slablast=np.insert(slabshapes[-1][:3:-1],0,slabshapes[-1][0],axis=0)
 slabInCoords=np.insert(slabInCoords,-1,slablast,axis=0)
 coors=np.array([])
 for x in slabInCoords:
-
     xs=np.linspace(np.min(x[:,0]),np.max(x[:,0]),1000)
     ys=np.interp(xs,x[:,0],x[:,1])
-    if uw.nProcs()==1:
-        plt.scatter(x[:,0],x[:,1])
-        plt.scatter(xs,ys,s=1,c=xs*ys)
     tracerSwarm.add_particles_with_coordinates(np.column_stack((xs,ys)))
 last=np.array(slabshapes)[-1,0:-3]
 
@@ -1088,23 +1094,14 @@ inEp = np.split(indCoords, 2)
 
 for l,r in zip(inEp[0],np.flip(inEp[1],0)):
     xyS=np.stack((np.linspace(l[0],r[0],1000),np.full((1000,),l[1])), axis=-1)
-    if uw.nProcs()==1:
-        plt.scatter(xyS[:,0],xyS[:,1],s=1,c=xyS[:,0]*xyS[:,1])
     tracerSwarm.add_particles_with_coordinates(xyS)
 tip=slabshapes[0,3],slabshapes[-1,-3]
-tip=np.stack((np.full((500,),tip[0][0]),(np.linspace(tip[0][1],tip[-1][1],500))), axis=-1)
-tracerSwarm.add_particles_with_coordinates(np.column_stack((np.linspace(inEp[0][0][0],inEp[0][-1][0],500),np.linspace(inEp[0][0][1],inEp[0][-1][1],500))));
-tracerSwarm.add_particles_with_coordinates(np.column_stack((np.linspace(inEp[1][0][0],inEp[1][-1][0],500),np.linspace(inEp[1][0][1],inEp[1][-1][1],500))));
-tracerSwarm.add_particles_with_coordinates(tip);
-tincord=tracerSwarm.add_variable(dataType="double", count=2)
-tincord.data[:]=tracerSwarm.particleCoordinates.data[:]
-if uw.nProcs()==1:
-    plt.scatter(np.linspace(inEp[0][0][0],inEp[0][-1][0],500),np.linspace(inEp[0][0][1],inEp[0][-1][1],500),s=1.)
-    plt.scatter(np.linspace(inEp[1][0][0],inEp[1][-1][0],500),np.linspace(inEp[1][0][1],inEp[1][-1][1],500),s=1.)
-    xyS=tip
-    plt.scatter(xyS[:,0],xyS[:,1],s=1,c=xyS[:,0]*xyS[:,1])
-
-
+tracerSwarm.add_particles_with_coordinates(
+    np.stack((np.full((500,),tip[0][0]),(np.linspace(tip[0][1],tip[-1][1],500))), axis=-1));
+tracerSwarm.add_particles_with_coordinates(
+    np.column_stack((np.linspace(inEp[0][0][0],inEp[0][-1][0],500),np.linspace(inEp[0][0][1],inEp[0][-1][1],500))));
+tracerSwarm.add_particles_with_coordinates(
+    np.column_stack((np.linspace(inEp[1][0][0],inEp[1][-1][0],500),np.linspace(inEp[1][0][1],inEp[1][-1][1],500))));
 
 overRiding=[np.array(overRidingShapesForeArc),np.array(overRidingShapes)]
 for i in overRiding:
@@ -1113,19 +1110,55 @@ for i in overRiding:
     overInCoords=np.insert(overInCoords,-1,overfirst,axis=0)
     coors=np.array([])
     for x in overInCoords:
-
         xs=np.linspace(np.min(x[:,0]),np.max(x[:,0]),1000)
         ys=np.interp(xs,x[:,0],x[:,1])
-        if uw.nProcs()==1:
-            plt.scatter(x[:,0],x[:,1])
-            plt.scatter(xs,ys,s=1,c=xs*ys)
         tracerSwarm.add_particles_with_coordinates(np.column_stack((xs,ys)))
 
+tincord=tracerSwarm.add_variable(dataType="double", count=2)
+tincord.data[:]=tracerSwarm.particleCoordinates.data[:]
 
 
-# In[ ]:
-
-
-f=glucifer.Figure(figsize=(3600,400))
+f=glucifer.Figure(figsize=(1800,200))
 f.Points(tracerSwarm,pointsize=4)
 f.show()
+
+if restartFlag is False:
+    checkpoint(step=0, time=dm(time, 1.0 * u.megayear).magnitude)
+
+while step < maxSteps:
+
+    if uw.rank() == 0:
+        print("Stokes Solver Started...")
+    ntol = 1e-2 if step == 0 else 1e-2
+    solver.solve(
+        nonLinearIterate=True,
+        nonLinearTolerance=ntol,
+        callback_post_solve=pressure_calibrate,
+    )
+
+    Vrms = np.sqrt(mesh.integrate(vdotv)[0] / mesh.integrate(1.0)[0])
+    # update
+    time, step, dt = model_update()
+    dmTime = dm(time, 1.0 * u.megayear).magnitude
+    if uw.rank() == 0:
+        logFile = open(outputDir + "/runLog.log", "a")
+
+        stepLog = "step = {0:6d}; dt = {1:.3e} Nd; time = {2:.3e} Ma, Vrms = {3:5e}\n".format(
+            step, dt, dmTime, Vrms
+        )
+        # print step
+        # print dt
+        # print time
+        # if timingFlag:
+        #     uw.timing.print_table(output_file=outputDir + "/uwTimer.log")
+        #     uw.timing.start()
+
+        print(stepLog)
+        logFile.write(stepLog)
+        logFile.close()
+    if step % 100 == 0 or step == 1:
+
+        checkpoint(step=step, time=dmTime)
+    sys.stdout.flush()
+
+    uw.barrier()
