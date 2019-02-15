@@ -1029,6 +1029,12 @@ def output_figures(step):
     # figPressure.save()
 
 
+tracerSwarm = uw.swarm.Swarm(mesh=mesh)
+traceradv = uw.systems.SwarmAdvector(
+    swarm=tracerSwarm, velocityField=velocityField, order=2
+)
+
+
 def model_update():
     # swarm_popcontrol.repopulate()
     dt = advector.get_max_dt()
@@ -1038,6 +1044,7 @@ def model_update():
 
     dt *= CFL
     advector.integrate(dt)
+    traceradv.integrate(dt)
     uw.barrier()
     # Cheap and Ugly Phase Change
     # material_flags = swarm.particleCoordinates.data[:, 1] < -nd(660.*u.kilometer)
@@ -1068,7 +1075,6 @@ def model_update():
 # In[3]:
 
 
-tracerSwarm = uw.swarm.Swarm(mesh=mesh)
 slabshapes = np.array(slabshapes)
 slabInCoords = np.array(slabshapes)[:, 0:4]
 slablast = np.insert(slabshapes[-1][:3:-1], 0, slabshapes[-1][0], axis=0)
