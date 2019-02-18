@@ -377,7 +377,64 @@ def checkpoint(step, time):
         checkpointlogFile.close()
 
 
-# function for the shapes
+# def checkpoint2(mesh, fieldDict, swarm, swarmDict, index,
+#                 meshName='mesh', swarmName='swarm',
+#                 prefix='./', enable_xdmf=True):
+#     import os
+#     # Check the prefix is valid
+#     if prefix is not None:
+#         if not prefix.endswith('/'):
+#             prefix += '/'  # add a backslash
+#         if not os.path.exists(prefix) and uw.rank() == 0:
+#             print "Creating directory: ", prefix
+#             os.makedirs(prefix)
+#         uw.barrier()
+#
+#     if not isinstance(index, int):
+#         raise TypeError("'index' is not of type int")
+#     ii = str(index)
+#
+#     if mesh is not None:
+#
+#         # Error check the mesh and fields
+#         if not isinstance(mesh, uw.mesh.FeMesh):
+#             raise TypeError("'mesh' is not of type uw.mesh.FeMesh")
+#         if not isinstance(fieldDict, dict):
+#             raise TypeError("'fieldDict' is not of type dict")
+#         for key, value in fieldDict.iteritems():
+#             if not isinstance(value, uw.mesh.MeshVariable):
+#                 raise TypeError("'fieldDict' must contain uw.mesh.MeshVariable elements")
+#
+#         # see if we have already saved the mesh. It only needs to be saved once
+#         if not hasattr(checkpoint, 'mH'):
+#             checkpoint.mH = mesh.save(prefix+meshName+".h5")
+#         mh = checkpoint.mH
+#
+#         for key, value in fieldDict.iteritems():
+#             filename = prefix+key+'-'+ii
+#             handle = value.save(filename+'.h5')
+#             if enable_xdmf:
+#                 value.xdmf(filename, handle, key, mh, meshName)
+#
+#     # is there a swarm
+#     if swarm is not None:
+#
+#         # Error check the swarms
+#         if not isinstance(swarm, uw.swarm.Swarm):
+#             raise TypeError("'swarm' is not of type uw.swarm.Swarm")
+#         if not isinstance(swarmDict, dict):
+#             raise TypeError("'swarmDict' is not of type dict")
+#         for key, value in swarmDict.iteritems():
+#             if not isinstance(value, uw.swarm.SwarmVariable):
+#                 raise TypeError("'fieldDict' must contain uw.swarm.SwarmVariable elements")
+#
+#         sH = swarm.save(prefix+swarmName+"-"+ii+".h5")
+#         for key, value in swarmDict.iteritems():
+#             filename = prefix+key+'-'+ii
+#             handle = value.save(filename+'.h5')
+#             if enable_xdmf:
+#                 value.xdmf(filename, handle, key, sH, swarmName)
+# # function for the shapes
 
 
 def make_slab2d(topX, topY, length, taper, dip, depth, thicknessArray):
