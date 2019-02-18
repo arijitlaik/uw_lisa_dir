@@ -33,7 +33,7 @@ def checkpoint(
 
     if not isinstance(index, int):
         raise TypeError("'index' is not of type int")
-    ii = str(index)
+    ii = str(index).zfill(5)
 
     if mesh is not None:
 
