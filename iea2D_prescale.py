@@ -70,10 +70,10 @@ else:
 maxSteps = step + 3000
 steps_output = 10
 # timingFlag = uw.__version__.find("2.5") == -1 or uw.__version__.find("2.6") == -1
-
+timingFlag = True
 # # timingFlag
-# if timingFlag:
-#     uw.timing.start()
+if timingFlag:
+    uw.timing.start()
 
 
 if uw.rank() == 0:
@@ -1219,9 +1219,9 @@ while step < maxSteps:
         # print step
         # print dt
         # print time
-        # if timingFlag:
-        #     uw.timing.print_table(output_file=outputDir + "/uwTimer.log")
-        #     uw.timing.start()
+        if timingFlag:
+            uw.timing.print_table(output_file=outputDir + "/uwTimer.log")
+            uw.timing.start()
 
         print(stepLog)
         logFile.write(stepLog)
