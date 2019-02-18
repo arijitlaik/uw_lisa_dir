@@ -28,7 +28,8 @@ def checkpoint(
         if not os.path.exists(prefix) and uw.rank() == 0:
             print("Creating directory: ", prefix)
             os.makedirs(prefix)
-        uw.barrier()
+
+    uw.barrier()
 
     if not isinstance(index, int):
         raise TypeError("'index' is not of type int")
