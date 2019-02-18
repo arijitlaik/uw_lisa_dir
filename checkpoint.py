@@ -1,7 +1,7 @@
 import os
 import underworld as uw
 
-mesh = uw.mesh.FeMesh_Cartesian()
+mesh = uw.mesh.FeMesh_Cartesian(elementRes=(128, 128))
 swarm = uw.swarm.Swarm(mesh=mesh)
 velocityField = mesh.add_variable(nodeDofCount=mesh.dim)
 pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
