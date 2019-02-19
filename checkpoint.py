@@ -7,7 +7,8 @@ velocityField = mesh.add_variable(nodeDofCount=mesh.dim)
 pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
 projVisc = mesh.add_variable(1)
 materialVariable = swarm.add_variable(dataType="int", count=1)
-tincord = swarm.add_variable(dataType="double", count=2)
+tracerSwarm = uw.swarm.Swarm(mesh=mesh)
+tincord = tracerSwarm.add_variable(dataType="double", count=2)
 
 
 def checkpoint(
@@ -88,6 +89,7 @@ fieldDict = {
 }
 
 swarmDict = {"materials": materialVariable}
-traceDict = {"tcoords", tincord}
+traceDict = {"tcoords": tincord}
 
 checkpoint(mesh, fieldDict, swarm, swarmDict, index=1, prefix="checkpointTest")
+checkpoint(None, None, tracerSwarm, traceDict, index=1, prefix="checkpointTest")
