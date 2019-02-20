@@ -3,7 +3,6 @@
 
 # Good Old Imports
 
-from colorMaps import coldmorning as coldmorning
 import os
 import sys
 
@@ -19,6 +18,7 @@ import glucifer
 
 # import tokyo
 import numpy as np
+from colorMaps import coldmorning as coldmorning
 
 # import json
 
@@ -238,7 +238,8 @@ uw.barrier()  # Just to be safe that all the vars sync
 def load_mesh_vars(step):
     if uw.rank() == 0:
         print("Loading Mesh.....")
-    mh = mesh.load(outputDir + "/mesh.00000.h5")
+    # mh =
+    mesh.load(outputDir + "/mesh.00000.h5")
     velocityField.load(outputDir + "velocityField." + str(step).zfill(5) + ".h5")
     pressureField.load(outputDir + "pressureField." + str(step).zfill(5) + ".h5")
     if uw.rank() == 0:
@@ -303,11 +304,9 @@ swarm_popcontrol = uw.swarm.PopulationControl(
 )
 
 # (swarm,deleteThreshold=0.,splitThreshold=0.,maxDeletions=0,maxSplits=9999)
-# create checkpoint function _ adapted from
-# https://github.com/underworldcode/underworld2/blob/regionalMesh/docs/development/models_inprogress/annulus/examples/stokes_hemisphere.ipynb
 
 
-def checkpoint(step, time):
+def checkpointOLD(step, time):
     # save swarm and swarm variables
 
     swarmHnd = swarm.save(outputDir + "swarm." + str(step).zfill(5) + ".h5")
@@ -377,64 +376,75 @@ def checkpoint(step, time):
         checkpointlogFile.close()
 
 
-# def checkpoint2(mesh, fieldDict, swarm, swarmDict, index,
-#                 meshName='mesh', swarmName='swarm',
-#                 prefix='./', enable_xdmf=True):
-#     import os
-#     # Check the prefix is valid
-#     if prefix is not None:
-#         if not prefix.endswith('/'):
-#             prefix += '/'  # add a backslash
-#         if not os.path.exists(prefix) and uw.rank() == 0:
-#             print "Creating directory: ", prefix
-#             os.makedirs(prefix)
-#         uw.barrier()
-#
-#     if not isinstance(index, int):
-#         raise TypeError("'index' is not of type int")
-#     ii = str(index)
-#
-#     if mesh is not None:
-#
-#         # Error check the mesh and fields
-#         if not isinstance(mesh, uw.mesh.FeMesh):
-#             raise TypeError("'mesh' is not of type uw.mesh.FeMesh")
-#         if not isinstance(fieldDict, dict):
-#             raise TypeError("'fieldDict' is not of type dict")
-#         for key, value in fieldDict.iteritems():
-#             if not isinstance(value, uw.mesh.MeshVariable):
-#                 raise TypeError("'fieldDict' must contain uw.mesh.MeshVariable elements")
-#
-#         # see if we have already saved the mesh. It only needs to be saved once
-#         if not hasattr(checkpoint, 'mH'):
-#             checkpoint.mH = mesh.save(prefix+meshName+".h5")
-#         mh = checkpoint.mH
-#
-#         for key, value in fieldDict.iteritems():
-#             filename = prefix+key+'-'+ii
-#             handle = value.save(filename+'.h5')
-#             if enable_xdmf:
-#                 value.xdmf(filename, handle, key, mh, meshName)
-#
-#     # is there a swarm
-#     if swarm is not None:
-#
-#         # Error check the swarms
-#         if not isinstance(swarm, uw.swarm.Swarm):
-#             raise TypeError("'swarm' is not of type uw.swarm.Swarm")
-#         if not isinstance(swarmDict, dict):
-#             raise TypeError("'swarmDict' is not of type dict")
-#         for key, value in swarmDict.iteritems():
-#             if not isinstance(value, uw.swarm.SwarmVariable):
-#                 raise TypeError("'fieldDict' must contain uw.swarm.SwarmVariable elements")
-#
-#         sH = swarm.save(prefix+swarmName+"-"+ii+".h5")
-#         for key, value in swarmDict.iteritems():
-#             filename = prefix+key+'-'+ii
-#             handle = value.save(filename+'.h5')
-#             if enable_xdmf:
-#                 value.xdmf(filename, handle, key, sH, swarmName)
-# # function for the shapes
+def checkpoint(
+    mesh,
+    fieldDict,
+    swarm,
+    swarmDict,
+    index,
+    meshName="mesh",
+    swarmName="swarm",
+    prefix="./",
+    enable_xdmf=True,
+):
+    # Check the prefix is valid
+    if prefix is not None:
+        if not prefix.endswith("/"):
+            prefix += "/"  # add a backslash
+        if not os.path.exists(prefix) and uw.rank() == 0:
+            print("Creating directory: ", prefix)
+            os.makedirs(prefix)
+
+    uw.barrier()
+
+    if not isinstance(index, int):
+        raise TypeError("'index' is not of type int")
+    ii = str(index).zfill(5)
+
+    if mesh is not None:
+
+        # Error check the mesh and fields
+        if not isinstance(mesh, uw.mesh.FeMesh):
+            raise TypeError("'mesh' is not of type uw.mesh.FeMesh")
+        if not isinstance(fieldDict, dict):
+            raise TypeError("'fieldDict' is not of type dict")
+        for key, value in fieldDict.iteritems():
+            if not isinstance(value, uw.mesh.MeshVariable):
+                raise TypeError(
+                    "'fieldDict' must contain uw.mesh.MeshVariable elements"
+                )
+
+        # see if we have already saved the mesh. It only needs to be saved once
+        if not hasattr(checkpoint, "mH"):
+            checkpoint.mH = mesh.save(prefix + meshName + ".h5")
+        mh = checkpoint.mH
+
+        for key, value in fieldDict.iteritems():
+            filename = prefix + key + "-" + ii
+            handle = value.save(filename + ".h5")
+            if enable_xdmf:
+                value.xdmf(filename, handle, key, mh, meshName)
+
+    # is there a swarm
+    if swarm is not None:
+
+        # Error check the swarms
+        if not isinstance(swarm, uw.swarm.Swarm):
+            raise TypeError("'swarm' is not of type uw.swarm.Swarm")
+        if not isinstance(swarmDict, dict):
+            raise TypeError("'swarmDict' is not of type dict")
+        for key, value in swarmDict.iteritems():
+            if not isinstance(value, uw.swarm.SwarmVariable):
+                raise TypeError(
+                    "'fieldDict' must contain uw.swarm.SwarmVariable elements"
+                )
+
+        sH = swarm.save(prefix + swarmName + "-" + ii + ".h5")
+        for key, value in swarmDict.iteritems():
+            filename = prefix + key + "-" + ii
+            handle = value.save(filename + ".h5")
+            if enable_xdmf:
+                value.xdmf(filename, handle, key, sH, swarmName)
 
 
 def make_slab2d(topX, topY, length, taper, dip, depth, thicknessArray):
@@ -796,22 +806,6 @@ if restartFlag is False:
     figParticle.save(outputDir + "/Particles_Initial")
 # figParticle.show()
 
-# ### Passive Tracer Tests
-# %matplotlib
-# import matplotlib.pyplot as plt
-# for i, mat in enumerate(modelMaterials):
-#     ma = np.array(mat["shape"])
-#     print np.max(mat["shape"][1])
-#     print np.min(mat["shape"][1])
-#     plt.scatter(ma)
-# ####
-# plt.gca().invert_yaxis()
-#
-# plt.show()
-# ma = np.array(mat["shape"])
-# ma.max()
-# ma[:, 1]
-# pass
 # WIP! check for the scaling of the exponent
 # def power_visc(eta0, n):
 #     return fn.math.exp(2. * (strainRate_2ndInvariant), 1.0/n - 1.0) * fn.math.exp(eta0, 1.0/n)
@@ -1188,12 +1182,21 @@ tincord = tracerSwarm.add_variable(dataType="double", count=2)
 tincord.data[:] = tracerSwarm.particleCoordinates.data[:]
 
 
-f = glucifer.Figure(figsize=(1800, 200))
-f.Points(tracerSwarm, pointsize=4)
-f.show()
+f = glucifer.Figure(figsize=figSize)
+f.Points(tracerSwarm, tincord, pointsize=4)
+f.save(outputDir + "/TracerInit")
+fieldDict = {
+    "velocity": velocityField,
+    "pressure": pressureField,
+    "meshViscosity": projVisc,
+}
+
+swarmDict = {"materials": materialVariable}
+traceDict = {"tcoords": tincord}
 
 if restartFlag is False:
-    checkpoint(step=0, time=dm(time, 1.0 * u.megayear).magnitude)
+    checkpoint(mesh, fieldDict, swarm, swarmDict, index=0, prefix="checkpointTest")
+    checkpoint(None, None, tracerSwarm, traceDict, index=0, prefix="checkpointTest")
 
 while step < maxSteps:
 
@@ -1227,8 +1230,9 @@ while step < maxSteps:
         logFile.write(stepLog)
         logFile.close()
     if step % 100 == 0 or step == 1:
-
-        checkpoint(step=step, time=dmTime)
+        projVisMesh.solve()
+        checkpoint(mesh, fieldDict, swarm, swarmDict, index=step, prefix=outputDir)
+        checkpoint(None, None, tracerSwarm, traceDict, index=step, prefix=outputDir)
     sys.stdout.flush()
 
     uw.barrier()
