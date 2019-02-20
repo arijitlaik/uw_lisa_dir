@@ -22,8 +22,8 @@ import glucifer
 # import tokyo
 import numpy as np
 from colorMaps import coldmorning as coldmorning
-
-# import json
+import pickle
+import json
 
 
 #
@@ -781,6 +781,22 @@ modelMaterials = [
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
 ]
+
+
+class QuanityEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, u.Quantity):
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
+if uw.rank() == 0:
+    with open(outputDir + "/ModelMaterials.json", "w") as outfile:
+        json.dump(modelMaterials, outfile, indent=1, sort_keys=True, cls=QuanityEncoder)
+    with open(outputDir + "/ModelMaterials.pkl", "wb") as outfile:
+        pickle.dump(modelMaterials, outfile)
+
+
 # figSize = (1800, 700)  # Chota ;)
 
 # if uw.rank() == 0:
