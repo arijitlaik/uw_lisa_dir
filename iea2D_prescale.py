@@ -28,7 +28,7 @@ from colorMaps import coldmorning as coldmorning
 #
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
-outputDirName = "2x12_4-00175_THSC_uw27_nsc"
+outputDirName = "2x12_4-00175_THSC_uw27_cpt"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -59,7 +59,7 @@ uw.barrier()
 # rstep = 400
 # rtimeDm = 0
 # clearLog = False
-# restartFlag = False
+restartFlag = False
 if restartFlag:
     step = rstep
 
@@ -123,7 +123,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 4  # 64 being the base vRes
+resMult = 2  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -1182,9 +1182,9 @@ tincord = tracerSwarm.add_variable(dataType="double", count=2)
 tincord.data[:] = tracerSwarm.particleCoordinates.data[:]
 
 
-f = glucifer.Figure(figsize=figSize)
-f.Points(tracerSwarm, tincord, pointsize=4)
-f.save(outputDir + "/TracerInit")
+# f = glucifer.Figure(figsize=figSize)
+# f.Points(tracerSwarm, tincord, pointsize=4)
+# f.save(outputDir + "/TracerInit")
 fieldDict = {
     "velocity": velocityField,
     "pressure": pressureField,
@@ -1197,6 +1197,10 @@ traceDict = {"tcoords": tincord}
 if restartFlag is False:
     checkpoint(mesh, fieldDict, swarm, swarmDict, index=0, prefix="checkpointTest")
     checkpoint(None, None, tracerSwarm, traceDict, index=0, prefix="checkpointTest")
+    if uw.rank() == 0:
+        checkpointlogFile = open(outputDir + "/checkpoint.log", "a+")
+        checkpointlogFile.write("{0:6d},{1};\n".format(step, time))
+        checkpointlogFile.close()
 
 while step < maxSteps:
 
@@ -1233,6 +1237,13 @@ while step < maxSteps:
         projVisMesh.solve()
         checkpoint(mesh, fieldDict, swarm, swarmDict, index=step, prefix=outputDir)
         checkpoint(None, None, tracerSwarm, traceDict, index=step, prefix=outputDir)
+        uw.barrier()
+        # Write checkpoint log only after files have been generated
+        if uw.rank() == 0:
+            checkpointlogFile = open(outputDir + "/checkpoint.log", "a+")
+            checkpointlogFile.write("{0:6d},{1};\n".format(step, time))
+            checkpointlogFile.close()
+
     sys.stdout.flush()
 
     uw.barrier()
