@@ -6,6 +6,9 @@
 import os
 import sys
 
+
+os.environ["UW_ENABLE_TIMING"] = "1"
+
 import underworld as uw
 from underworld import function as fn
 
@@ -69,6 +72,7 @@ else:
 
 maxSteps = step + 3000
 steps_output = 10
+
 # timingFlag = uw.__version__.find("2.5") == -1 or uw.__version__.find("2.6") == -1
 timingFlag = True
 # # timingFlag
@@ -123,7 +127,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 2  # 64 being the base vRes
+resMult = 4  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -181,31 +185,35 @@ if restartFlag is False:
     if uw.rank() == 0:
         print("Deforming Mesh.....!")
 
-    xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
-    cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
-    xL = np.arange(cenX, cenX + refRange[0] / 2.0, refInt[0])
-    xG = np.geomspace(
-        cenX + refRange[0] / 2, mesh.maxCoord[0], mesh.elementRes[0] / 2.0 - xL.size + 1
-    )
-    # xG = np.linspace(
-    #     cenX + refRange[0]/2, mesh.maxCoord[0], mesh.elementRes[0]/2. - xL.size+1)
-    assert mesh.elementRes[0] / 2 - (xL.size + xG.size) == -1
-    xR = np.concatenate((xL, xG), axis=0)
-    xrF = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xR, axis=0)
-    xR = np.concatenate((xrF, xR), axis=0)
-    xR = np.delete(xR, xR.size / 2)
-    assert mesh.elementRes[0] + 1 - xR.size == 0
+    if refineHoriz:
+        xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
+        cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
+        xL = np.arange(cenX, cenX + refRange[0] / 2.0, refInt[0])
+        xG = np.geomspace(
+            cenX + refRange[0] / 2,
+            mesh.maxCoord[0],
+            mesh.elementRes[0] / 2.0 - xL.size + 1,
+        )
+        # xG = np.linspace(
+        #     cenX + refRange[0]/2, mesh.maxCoord[0], mesh.elementRes[0]/2. - xL.size+1)
+        assert mesh.elementRes[0] / 2 - (xL.size + xG.size) == -1
+        xR = np.concatenate((xL, xG), axis=0)
+        xrF = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xR, axis=0)
+        xR = np.concatenate((xrF, xR), axis=0)
+        xR = np.delete(xR, xR.size / 2)
+        assert mesh.elementRes[0] + 1 - xR.size == 0
 
-    yO = np.linspace(mesh.minCoord[1], mesh.maxCoord[1], mesh.elementRes[1] + 1)
-    yL = np.arange(mesh.maxCoord[1], mesh.maxCoord[1] + refRange[1], -refInt[1])
-    yG = np.geomspace(
-        mesh.maxCoord[1] + refRange[1], mesh.minCoord[1], yO.size - yL.size
-    )
-    # yG = np.linspace(mesh.maxCoord[1] + refRange[1],
-    #                  mesh.minCoord[1], yO.size - yL.size)
-    assert mesh.elementRes[1] + 1 - (yL.size + yG.size) == 0
-    yR = np.concatenate((yL, yG), axis=0)
-    yR = np.flip(yR, axis=0)  # -ve Coordinates silly hack for interp
+    if refineVert:
+        yO = np.linspace(mesh.minCoord[1], mesh.maxCoord[1], mesh.elementRes[1] + 1)
+        yL = np.arange(mesh.maxCoord[1], mesh.maxCoord[1] + refRange[1], -refInt[1])
+        yG = np.geomspace(
+            mesh.maxCoord[1] + refRange[1], mesh.minCoord[1], yO.size - yL.size
+        )
+        # yG = np.linspace(mesh.maxCoord[1] + refRange[1],
+        #                  mesh.minCoord[1], yO.size - yL.size)
+        assert mesh.elementRes[1] + 1 - (yL.size + yG.size) == 0
+        yR = np.concatenate((yL, yG), axis=0)
+        yR = np.flip(yR, axis=0)  # -ve Coordinates silly hack for interp
 
     uw.barrier()  # safeguard
     # xM, yM = np.meshgrid(xR, yR)
@@ -382,6 +390,7 @@ def checkpoint(
     swarm,
     swarmDict,
     index,
+    modeltime=None,
     meshName="mesh",
     swarmName="swarm",
     prefix="./",
@@ -399,6 +408,11 @@ def checkpoint(
 
     if not isinstance(index, int):
         raise TypeError("'index' is not of type int")
+    if modeltime is not None:
+        time = modeltime
+    else:
+        time = index
+
     ii = str(index).zfill(5)
 
     if mesh is not None:
@@ -423,7 +437,7 @@ def checkpoint(
             filename = prefix + key + "-" + ii
             handle = value.save(filename + ".h5")
             if enable_xdmf:
-                value.xdmf(filename, handle, key, mh, meshName)
+                value.xdmf(filename, handle, key, mh, meshName, modeltime=time)
 
     # is there a swarm
     if swarm is not None:
@@ -444,7 +458,7 @@ def checkpoint(
             filename = prefix + key + "-" + ii
             handle = value.save(filename + ".h5")
             if enable_xdmf:
-                value.xdmf(filename, handle, key, sH, swarmName)
+                value.xdmf(filename, handle, key, sH, swarmName, modeltime=time)
 
 
 def make_slab2d(topX, topY, length, taper, dip, depth, thicknessArray):
@@ -1195,8 +1209,25 @@ swarmDict = {"materials": materialVariable}
 traceDict = {"tcoords": tincord}
 
 if restartFlag is False:
-    checkpoint(mesh, fieldDict, swarm, swarmDict, index=0, prefix="checkpointTest")
-    checkpoint(None, None, tracerSwarm, traceDict, index=0, prefix="checkpointTest")
+    checkpoint(
+        mesh,
+        fieldDict,
+        swarm,
+        swarmDict,
+        index=0,
+        modeltime=dm(time, 1.0 * u.megayear).magnitude,
+        prefix=outputDir,
+    )
+    checkpoint(
+        None,
+        None,
+        tracerSwarm,
+        traceDict,
+        swarmName="tswarm",
+        index=0,
+        modeltime=dm(time, 1.0 * u.megayear).magnitude,
+        prefix=outputDir,
+    )
     if uw.rank() == 0:
         checkpointlogFile = open(outputDir + "/checkpoint.log", "a+")
         checkpointlogFile.write("{0:6d},{1};\n".format(step, time))
@@ -1235,8 +1266,25 @@ while step < maxSteps:
         logFile.close()
     if step % 100 == 0 or step == 1:
         projVisMesh.solve()
-        checkpoint(mesh, fieldDict, swarm, swarmDict, index=step, prefix=outputDir)
-        checkpoint(None, None, tracerSwarm, traceDict, index=step, prefix=outputDir)
+        checkpoint(
+            mesh,
+            fieldDict,
+            swarm,
+            swarmDict,
+            index=step,
+            modeltime=dmTime,
+            prefix=outputDir,
+        )
+        checkpoint(
+            None,
+            None,
+            tracerSwarm,
+            traceDict,
+            swarmName="tswarm",
+            index=step,
+            modeltime=dmTime,
+            prefix=outputDir,
+        )
         uw.barrier()
         # Write checkpoint log only after files have been generated
         if uw.rank() == 0:
