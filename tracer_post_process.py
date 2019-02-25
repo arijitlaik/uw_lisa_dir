@@ -89,23 +89,33 @@ CFL = 1.0
 
 import h5py
 
-t0 = h5py.File(outputDir + "tswarm-00000.h5", "r")["data"]
-t1 = h5py.File(outputDir + "tswarm-00025.h5", "r")["data"]
-ic0 = h5py.File(outputDir + "tcoords-00000.h5", "r")["data"]
-ic1 = h5py.File(outputDir + "tcoords-00025.h5", "r")["data"]
+import numpy as np
 
-g
+outputDir = "4x12_8-00175_hiSpEta/"
+with h5py.File(outputDir + "tswarm-00000.h5", "r") as f:
+    t0 = f["data"][()]
+with h5py.File(outputDir + "tswarm-00025.h5", "r") as f:
+    t1 = f["data"][()]
+with h5py.File(outputDir + "tcoords-00000.h5", "r") as f:
+    ic0 = f["data"][()]
+with h5py.File(outputDir + "tcoords-00025.h5", "r") as f:
+    ic1 = f["data"][()]
 
-top = t0[ic0[:, 1] == 0, :]
-trenchF = np.logical_and(top[:, 0] > 1.99, top[:, 0] < 2.01)
 
-crds = t["data"]
-
+isNearTrench0 = (ic0[:, 1] == 0) & ((ic0[:, 0] > 1.999) & (ic0[:, 0] < 2.001))
+trench0 = t0[isNearTrench0]
+isNearTrench1 = (ic1[:, 1] == 0) & ((ic1[:, 0] > 1.999) & (ic1[:, 0] < 2.001))
+trench1 = t1[isNearTrench1]
 import matplotlib.pyplot as plt
 
+trench0
+trench1
+ic0[isNearTrench0]
+ic1[isNearTrench1]
 # %matplotlib
 
-
+plt.scatter(trench0[:, 0], trench0[:, 1], c=ic0[isNearTrench0][:, 1])
+plt.scatter(trench1[:, 0], trench1[:, 1], c=ic1[isNearTrench1][:, 1])
 # plt.scatter(ic0['data'][:, 0], ic0['data'][:,1], s=0.1)
 # plt.scatter(ic1['data'][:, 0], ic1['data'][:,1], s=0.1)
 # PendingDeprecationWarning
