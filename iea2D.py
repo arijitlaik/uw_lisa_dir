@@ -1070,9 +1070,6 @@ def model_update():
         print("Repopulating Particles...")
     swarm_popcontrol.repopulate()
 
-    if step % imSteps == 0 or step == maxSteps - 1:
-        output_figures(step)
-
     return time + dt, step + 1, dt
 
 
@@ -1197,6 +1194,10 @@ while step < maxSteps:
     # update
     time, step, dt = model_update()
     dmTime = dm(time, 1.0 * u.megayear).magnitude
+
+    if step % imSteps == 0 or step == maxSteps - 1:
+        output_figures(step)
+
     if uw.rank() == 0:
         logFile = open(outputDir + "/runLog.log", "a")
 
@@ -1236,7 +1237,8 @@ while step < maxSteps:
             modeltime=dmTime,
             prefix=outputDir,
         )
-        uw.barrier()
+    uw.barrier()
+    if step % cpSteps == 0 or step == 1:
         # Write checkpoint log only after files have been generated
         if uw.rank() == 0:
             checkpointlogFile = open(outputDir + "/checkpoint.log", "a+")
