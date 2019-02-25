@@ -1,9 +1,9 @@
 #!/bin/bash
 # SBATCH -p short
-#SBATCH --nodes=4
+#SBATCH --nodes=3
 # SBATCH --constraint=infiniband,avx2
-#SBATCH --constraint=infiniband
-#SBATCH --tasks-per-node 12
+# SBATCH --constraint=infiniband
+#SBATCH --tasks-per-node 16
 #SBATCH --time=72:00:00
 
 echo "********** CPU-INFO **********"

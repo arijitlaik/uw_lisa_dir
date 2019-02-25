@@ -139,7 +139,7 @@ refineHoriz = True
 refineVert = True
 # refineHoriz = False
 # refineVert = False
-refInt = [0.00175, 0.00175]
+refInt = [0.00125, 0.00125]
 refRange = [0.5, -0.25]
 
 time = nd(sTime * u.megayear)
