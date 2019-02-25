@@ -31,7 +31,7 @@ import datetime
 #
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
-outputDirName = "2x12_4-00175_VHSC_uw27_cpt"
+outputDirName = "4x12_8-00175_hiSpEta"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -71,7 +71,7 @@ else:
     sTime = 0
 
 maxSteps = step + 3000
-imSteps = 10
+imSteps = 25
 cpSteps = 50
 trSteps = 5
 
@@ -1011,10 +1011,9 @@ figVelocityMag = glucifer.Figure(store, figsize=figSize, name="Velocity Magnitud
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    # valueRange=[0, 1e-4],
+    valueRange=[0, 1e-3],
     # logScale=True,
-    # colours=glucifer.lavavu.matplotlib_colourmap(
-    # "plasma_r"),
+    colours=glucifer.lavavu.matplotlib_colourmap("plasma_r"),
     # colours=tokyo.cm_data,
     onMesh=True,
 )
