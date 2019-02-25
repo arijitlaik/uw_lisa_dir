@@ -1185,7 +1185,7 @@ while step < maxSteps:
 
     if uw.rank() == 0:
         print("Stokes Solver Started...")
-    ntol = 1e-2 if step == 0 else 1e-2
+    ntol = 1e-5 if step == 0 else 1e-3
     solver.solve(
         nonLinearIterate=True,
         nonLinearTolerance=ntol,
