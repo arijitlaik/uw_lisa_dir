@@ -318,76 +318,6 @@ swarm_popcontrol = uw.swarm.PopulationControl(
 # (swarm,deleteThreshold=0.,splitThreshold=0.,maxDeletions=0,maxSplits=9999)
 
 
-def checkpointOLD(step, time):
-    # save swarm and swarm variables
-
-    swarmHnd = swarm.save(outputDir + "swarm." + str(step).zfill(5) + ".h5")
-    materialVariableHnd = materialVariable.save(
-        outputDir + "materialVariable." + str(step).zfill(5) + ".h5"
-    )
-    # save mesh variables
-    velocityHnd = velocityField.save(
-        outputDir + "velocityField." + str(step).zfill(5) + ".h5", meshHnd
-    )
-    pressureHnd = pressureField.save(
-        outputDir + "pressureField." + str(step).zfill(5) + ".h5", meshHnd
-    )
-    projVisMesh.solve()
-    projViscHnd = projVisc.save(
-        outputDir + "projVisc." + str(step).zfill(5) + ".h5", meshHnd
-    )
-    # and the xdmf files
-    materialVariable.xdmf(
-        outputDir + "materialVariable." + str(step).zfill(5) + ".xdmf",
-        materialVariableHnd,
-        "materialVariable",
-        swarmHnd,
-        "swarm",
-        modeltime=time,
-    )
-    velocityField.xdmf(
-        outputDir + "velocityField." + str(step).zfill(5) + ".xdmf",
-        velocityHnd,
-        "velocity",
-        meshHnd,
-        "mesh",
-        modeltime=time,
-    )
-    pressureField.xdmf(
-        outputDir + "pressureField." + str(step).zfill(5) + ".xdmf",
-        pressureHnd,
-        "pressure",
-        meshHnd,
-        "mesh",
-        modeltime=time,
-    )
-    projVisc.xdmf(
-        outputDir + "projViscField." + str(step).zfill(5) + ".xdmf",
-        projViscHnd,
-        "projVisc",
-        meshHnd,
-        "mesh",
-        modeltime=time,
-    )
-    tswarmHnd = tracerSwarm.save(outputDir + "tswarm." + str(step).zfill(5) + ".h5")
-    tincordHnd = tincord.save(outputDir + "tcord." + str(step).zfill(5) + ".h5")
-
-    tincord.xdmf(
-        outputDir + "tcord." + str(step).zfill(5) + ".xdmf",
-        tincordHnd,
-        "tcord.",
-        tswarmHnd,
-        "tswarm",
-        modeltime=time,
-    )
-    uw.barrier()
-    # Write checkpoint log only after files have been generated
-    if uw.rank() == 0:
-        checkpointlogFile = open(outputDir + "/checkpoint.log", "a+")
-        checkpointlogFile.write("{0:6d},{1};\n".format(step, time))
-        checkpointlogFile.close()
-
-
 def checkpoint(
     mesh,
     fieldDict,
@@ -616,8 +546,7 @@ overRidingShapes = make_overRidingPlate2d(
     dip=90,
     thicknessArray=[nd(40.0 * u.kilometer), nd(80.0 * u.kilometer)],
 )
-overRidingShapesForeArc
-overRidingShapes
+
 # define the viscosity Range
 viscRange = [1.0, 1e5]
 
