@@ -219,9 +219,10 @@ if restartFlag is False:
         yR = np.concatenate((yL, yG), axis=0)
         yR = np.flip(yR, axis=0)  # -ve Coordinates silly hack for interp
 
+    mesh.reset()
     uw.barrier()  # safeguard
     # xM, yM = np.meshgrid(xR, yR)
-    mesh.reset()
+
     with mesh.deform_mesh():
         if refineHoriz:
             mesh.data[:, 0] = np.interp(mesh.data[:, 0], xO, xR)
