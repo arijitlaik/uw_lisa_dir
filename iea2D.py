@@ -184,7 +184,7 @@ figMesh = glucifer.Figure(store=setupStore, figsize=figSize, quality=3)
 figMesh.Mesh(mesh)
 # # figMesh.save()
 figMesh.save(outputDir + "/MeshInit2.png")
-
+uw.barrier()  # another safeguard
 if restartFlag is False:
     if uw.rank() == 0:
         print("Deforming Mesh.....!")
