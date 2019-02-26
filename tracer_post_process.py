@@ -1,25 +1,27 @@
+import matplotlib.pyplot as plt
+import h5py
+import datetime
+import json
+import pickle
+import numpy as np
+import glucifer
+import os
+
+os.environ["UW_ENABLE_TIMING"] = "1"
+
+from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
+from underworld.scaling import units as u
+from underworld import function as fn
+import underworld as uw
 import os
 import sys
 
-os.environ["UW_ENABLE_TIMING"] = "1"
-import underworld as uw
-from underworld import function as fn
-
-from underworld.scaling import units as u
-from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
-
-import glucifer
 
 # import colorcet as cc
 
 # import tokyo
-import numpy as np
 
 # from colorMaps import coldmorning as coldmorning
-
-import pickle
-import json
-import datetime
 
 
 class QuanityEncoder(json.JSONEncoder):
@@ -87,10 +89,6 @@ dt = 0.0
 CFL = 1.0
 
 
-import h5py
-
-import numpy as np
-
 outputDir = "4x12_8-00175_hiSpEta/"
 with h5py.File(outputDir + "tswarm-00000.h5", "r") as f:
     t0 = f["data"][()]
@@ -106,7 +104,6 @@ isNearTrench0 = (ic0[:, 1] == 0) & ((ic0[:, 0] > 1.999) & (ic0[:, 0] < 2.001))
 trench0 = t0[isNearTrench0]
 isNearTrench1 = (ic1[:, 1] == 0) & ((ic1[:, 0] > 1.999) & (ic1[:, 0] < 2.001))
 trench1 = t1[isNearTrench1]
-import matplotlib.pyplot as plt
 
 trench0
 trench1
@@ -119,3 +116,21 @@ plt.scatter(trench1[:, 0], trench1[:, 1], c=ic1[isNearTrench1][:, 1])
 # plt.scatter(ic0['data'][:, 0], ic0['data'][:,1], s=0.1)
 # plt.scatter(ic1['data'][:, 0], ic1['data'][:,1], s=0.1)
 # PendingDeprecationWarning
+
+fH = open(outputDir + "/tracer_checkpoint.log", "r")
+time = np.genfromtxt(outputDir + "/tracer_checkpoint.log", delimiter=",")
+trC = []
+time.shape
+for i in time[:, 0]:
+    stStr = str(int(i)).zfill(5)
+    with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
+        tCoord = f["data"][()]
+    with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
+        ic = f["data"][()]
+    # isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.99) & (ic[:, 0] < 2.01))
+    isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 2.0)
+    tr = np.copy(tCoord[isNearTrench])
+    trC.append(np.average(tr[:, 0]))
+# %matplotlib
+trC = np.array(trC)
+plt.plot(time[:, 1], (trC - 2.0) / time[:, 1])
