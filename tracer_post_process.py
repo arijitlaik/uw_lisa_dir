@@ -49,7 +49,7 @@ refDensity = 3200.0 * u.kilogram / u.meter ** 3
 deltaRhoMax = 80.0 * u.kilogram / u.meter ** 3
 gravity = 9.8 * u.metre / u.second ** 2
 # 1.57e20 * u.pascal * u.second 5.e20 * u.pascal * u.second
-refViscosity = 5.0e20 * u.pascal * u.second
+refViscosity = 5e20 * u.pascal * u.second
 bodyForce = deltaRhoMax * gravity
 
 # scaling coefficients
@@ -89,14 +89,23 @@ dt = 0.0
 CFL = 1.0
 
 
-outputDir = "4x12_8-00175_hiSpEta/"
+outputDir = "/Users/arijit/Documents/research/lisaMnt/uw/4x12_8-00175_hiSpEta/"
 
 fH = open(outputDir + "/checkpoint.log", "r")
-time = np.genfromtxt(outputDir + "/checkpoint.log", delimiter=",")
+
+with open(outputDir + "/checkpoint.log", "r") as infile, open(
+    outputDir + "/tRcheckpoint.log", "w+"
+) as outfile:
+    temp = infile.read().replace(";", "")
+    outfile.write(temp)
+time = np.genfromtxt(outputDir + "/tRcheckpoint.log", delimiter=",")
+
+time[-1]
 trC = []
-time
-time[:, 0][-1]
-time.shape
+# time.shape
+# time
+# time[:, 0][-1]
+# time.shape
 for i in time[:, 0]:
     stStr = str(int(i)).zfill(5)
     with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
@@ -109,5 +118,67 @@ for i in time[:, 0]:
     trC.append(np.average(tr[:, 0]))
 # %matplotlib
 trC = np.array(trC)
-plt.plot(time[:, 1], (trC - 2.0) / time[:, 1])
-plt.plot(dm(time[:, 1], u.megayear), trC)
+
+plt.scatter(dm(time[:, 1], u.megayear), trC, s=1)
+
+mesh = uw.mesh.FeMesh_Cartesian(
+    elementType=("Q1/dQ0"),
+    elementRes=(xRes, yRes),
+    # minCoord=(nd(0.*u.kilometer), nd(-modelHeight+192.*u.kilometer)),
+    minCoord=(nd(0.0 * u.kilometer), nd(-modelHeight)),
+    # maxCoord=(nd(9600.*u.kilometer), nd(192.*u.kilometer)),
+    maxCoord=(aRatioCoor * nd(modelHeight), nd(0.0 * u.kilometer)),
+    periodic=[False, False],
+)
+
+velocityField = mesh.add_variable(nodeDofCount=mesh.dim)
+pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
+tracerSwarm = uw.swarm.Swarm(mesh=mesh)
+tincord = tracerSwarm.add_variable(dataType="double", count=2)
+
+
+def load_mesh_vars(step):
+    if uw.rank() == 0:
+        print("Loading Mesh.....")
+    # mh =
+    mesh.load(outputDir + "/mesh.00000.h5")
+
+    velocityField.load(outputDir + "velocity-" + str(step).zfill(5) + ".h5")
+    pressureField.load(outputDir + "pressure-" + str(step).zfill(5) + ".h5")
+    if uw.rank() == 0:
+        print("Loading Mesh......Done!")
+    # return mesh.save(outputDir + "mesh.00000.h5")
+
+
+vel = []
+for i in np.arange(0, 1295, 50):
+    stStr = str(int(i)).zfill(5)
+    tracerSwarm = uw.swarm.Swarm(mesh=mesh)
+    tincord = tracerSwarm.add_variable(dataType="double", count=2)
+    tracerSwarm.load(outputDir + "tswarm-" + stStr + ".h5")
+    tincord.load(outputDir + "tcoords-" + stStr + ".h5")
+    ic = tincord.data
+    tcord = tracerSwarm.datas
+    velocityField.load(outputDir + "velocity-" + stStr + ".h5")
+    isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 2.0)
+    tr = tcord[isNearTrench]
+    print(tr)
+    vel.append(velocityField.evaluate(tr))
+vel = np.array(vel)
+
+x = np.arange(0, 1295, 50)
+time[-1]
+1250 / 50
+ndT = []
+for i in np.arange(0, 1250, 50):
+    ndT.append(time[time[:, 0] == i, 1])
+# %matplotlib
+plt.plot(dm(np.array(ndT)[1:], u.megayear), dm(vel[:, 0, 0], u.centimeter / u.year))
+plt.plot(
+    dm(np.array(ndT)[1:], u.megayear), dm(vel[:, 0, 0], u.centimeter / u.year), "."
+)
+
+plt.xlabel("Time in megayear")
+plt.ylabel("$Vx_{trench}$ in centimeters/year")
+# !ls
+# plt.plot(dm(np.array(ndT)[1:], u.megayear), dm(vel[:, 0, 0], u.centimeter / u.year))

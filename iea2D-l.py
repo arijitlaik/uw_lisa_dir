@@ -130,7 +130,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 8  # 64 being the base vRes
+resMult = 2  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -139,7 +139,7 @@ refineHoriz = True
 refineVert = True
 # refineHoriz = False
 # refineVert = False
-refInt = [1 / (resMult * 1e2), 1 / (resMult * 1e2)]
+refInt = [1.0 / (resMult * 1e2), 1.0 / (resMult * 1e2)]
 refRange = [0.5, -0.25]
 
 time = nd(sTime * u.megayear)
