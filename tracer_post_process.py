@@ -90,36 +90,12 @@ CFL = 1.0
 
 
 outputDir = "4x12_8-00175_hiSpEta/"
-with h5py.File(outputDir + "tswarm-00000.h5", "r") as f:
-    t0 = f["data"][()]
-with h5py.File(outputDir + "tswarm-00025.h5", "r") as f:
-    t1 = f["data"][()]
-with h5py.File(outputDir + "tcoords-00000.h5", "r") as f:
-    ic0 = f["data"][()]
-with h5py.File(outputDir + "tcoords-00025.h5", "r") as f:
-    ic1 = f["data"][()]
 
-
-isNearTrench0 = (ic0[:, 1] == 0) & ((ic0[:, 0] > 1.999) & (ic0[:, 0] < 2.001))
-trench0 = t0[isNearTrench0]
-isNearTrench1 = (ic1[:, 1] == 0) & ((ic1[:, 0] > 1.999) & (ic1[:, 0] < 2.001))
-trench1 = t1[isNearTrench1]
-
-trench0
-trench1
-ic0[isNearTrench0]
-ic1[isNearTrench1]
-# %matplotlib
-
-plt.scatter(trench0[:, 0], trench0[:, 1], c=ic0[isNearTrench0][:, 1])
-plt.scatter(trench1[:, 0], trench1[:, 1], c=ic1[isNearTrench1][:, 1])
-# plt.scatter(ic0['data'][:, 0], ic0['data'][:,1], s=0.1)
-# plt.scatter(ic1['data'][:, 0], ic1['data'][:,1], s=0.1)
-# PendingDeprecationWarning
-
-fH = open(outputDir + "/tracer_checkpoint.log", "r")
-time = np.genfromtxt(outputDir + "/tracer_checkpoint.log", delimiter=",")
+fH = open(outputDir + "/checkpoint.log", "r")
+time = np.genfromtxt(outputDir + "/checkpoint.log", delimiter=",")
 trC = []
+time
+time[:, 0][-1]
 time.shape
 for i in time[:, 0]:
     stStr = str(int(i)).zfill(5)
@@ -128,9 +104,10 @@ for i in time[:, 0]:
     with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
         ic = f["data"][()]
     # isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.99) & (ic[:, 0] < 2.01))
-    isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 2.0)
+    isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 2.0)  # Mask For The Trench
     tr = np.copy(tCoord[isNearTrench])
     trC.append(np.average(tr[:, 0]))
 # %matplotlib
 trC = np.array(trC)
 plt.plot(time[:, 1], (trC - 2.0) / time[:, 1])
+plt.plot(dm(time[:, 1], u.megayear), trC)
