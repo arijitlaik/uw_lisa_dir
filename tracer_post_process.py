@@ -1,3 +1,8 @@
+import sys
+import underworld as uw
+from underworld import function as fn
+from underworld.scaling import units as u
+from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
 import matplotlib.pyplot as plt
 import h5py
 import datetime
@@ -8,13 +13,6 @@ import glucifer
 import os
 
 os.environ["UW_ENABLE_TIMING"] = "1"
-
-from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
-from underworld.scaling import units as u
-from underworld import function as fn
-import underworld as uw
-import os
-import sys
 
 
 # import colorcet as cc
@@ -49,7 +47,7 @@ refDensity = 3200.0 * u.kilogram / u.meter ** 3
 deltaRhoMax = 80.0 * u.kilogram / u.meter ** 3
 gravity = 9.8 * u.metre / u.second ** 2
 # 1.57e20 * u.pascal * u.second 5.e20 * u.pascal * u.second
-refViscosity = 5e20 * u.pascal * u.second
+refViscosity = 2e20 * u.pascal * u.second
 bodyForce = deltaRhoMax * gravity
 
 # scaling coefficients
@@ -89,7 +87,7 @@ dt = 0.0
 CFL = 1.0
 
 
-outputDir = "/Users/arijit/Documents/research/lisaMnt/uw/4x12_8-00175_hiSpEta/"
+outputDir = "4x12_8-00175_hiSpEta/"
 
 fH = open(outputDir + "/checkpoint.log", "r")
 
@@ -118,7 +116,7 @@ for i in time[:, 0]:
     trC.append(np.average(tr[:, 0]))
 # %matplotlib
 trC = np.array(trC)
-
+# %matplotlib
 plt.scatter(dm(time[:, 1], u.megayear), trC, s=1)
 
 mesh = uw.mesh.FeMesh_Cartesian(
@@ -150,35 +148,39 @@ def load_mesh_vars(step):
     # return mesh.save(outputDir + "mesh.00000.h5")
 
 
+time
 vel = []
-for i in np.arange(0, 1295, 50):
+vel2 = []
+for i in np.arange(0, time[-1][0], 50):
     stStr = str(int(i)).zfill(5)
     tracerSwarm = uw.swarm.Swarm(mesh=mesh)
     tincord = tracerSwarm.add_variable(dataType="double", count=2)
     tracerSwarm.load(outputDir + "tswarm-" + stStr + ".h5")
     tincord.load(outputDir + "tcoords-" + stStr + ".h5")
     ic = tincord.data
-    tcord = tracerSwarm.datas
+    tcord = tracerSwarm.data
     velocityField.load(outputDir + "velocity-" + stStr + ".h5")
-    isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 2.0)
+    # isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 0.725)
+    isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 0.99) & (ic[:, 0] < 1.00))
     tr = tcord[isNearTrench]
     print(tr)
-    vel.append(velocityField.evaluate(tr))
-vel = np.array(vel)
+    vel2.append(velocityField.evaluate(tr))
+vel2.shape
+vel2 = np.array(vel2)
 
-x = np.arange(0, 1295, 50)
+x = np.arange(0, time[-1][0], 50)
 time[-1]
-1250 / 50
 ndT = []
-for i in np.arange(0, 1250, 50):
+for i in np.arange(0, time[-1][0], 50):
     ndT.append(time[time[:, 0] == i, 1])
-# %matplotlib
-plt.plot(dm(np.array(ndT)[1:], u.megayear), dm(vel[:, 0, 0], u.centimeter / u.year))
+ndT = np.array(ndT)
+
+plt.plot(dm(ndT[1:], u.megayear), dm(-vel[1:, 0, 0], u.centimeter / u.year))
 plt.plot(
-    dm(np.array(ndT)[1:], u.megayear), dm(vel[:, 0, 0], u.centimeter / u.year), "."
+    dm(np.array(ndT)[1:], u.megayear), -dm(vel2[1:, -1, 0], u.centimeter / u.year), "."
 )
 
 plt.xlabel("Time in megayear")
-plt.ylabel("$Vx_{trench}$ in centimeters/year")
+plt.ylabel("$Vx_{t}$ and $Vx_{sp}$ in centimeters/year")
 # !ls
 # plt.plot(dm(np.array(ndT)[1:], u.megayear), dm(vel[:, 0, 0], u.centimeter / u.year))
