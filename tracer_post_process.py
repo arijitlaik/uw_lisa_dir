@@ -47,7 +47,7 @@ refDensity = 3200.0 * u.kilogram / u.meter ** 3
 deltaRhoMax = 80.0 * u.kilogram / u.meter ** 3
 gravity = 9.8 * u.metre / u.second ** 2
 # 1.57e20 * u.pascal * u.second 5.e20 * u.pascal * u.second
-refViscosity = 2e20 * u.pascal * u.second
+refViscosity = 5e20 * u.pascal * u.second
 bodyForce = deltaRhoMax * gravity
 
 # scaling coefficients
@@ -141,7 +141,7 @@ mesh = uw.mesh.FeMesh_Cartesian(
     maxCoord=(aRatioCoor * nd(modelHeight), nd(0.0 * u.kilometer)),
     periodic=[False, False],
 )
-
+mesh.load(outputDir + "/mesh.h5")
 velocityField = mesh.add_variable(nodeDofCount=mesh.dim)
 pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
 tracerSwarm = uw.swarm.Swarm(mesh=mesh)
@@ -164,19 +164,23 @@ def load_mesh_vars(step):
     # return mesh.save(outputDir + "mesh.00000.h5")
 
 
-isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
-tcord[isSubductingPlate]
+# isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
+# tcord[isSubductingPlate]
 time
 velsp = []
 velt = []
 for i in np.arange(0, time[-1][0], 50):
     stStr = str(int(i)).zfill(5)
-    tracerSwarm = uw.swarm.Swarm(mesh=mesh)
-    tincord = tracerSwarm.add_variable(dataType="double", count=2)
-    tracerSwarm.load(outputDir + "tswarm-" + stStr + ".h5")
-    tincord.load(outputDir + "tcoords-" + stStr + ".h5")
-    ic = tincord.data
-    tcord = tracerSwarm.data
+    # tracerSwarm = uw.swarm.Swarm(mesh=mesh)
+    # tincord = tracerSwarm.add_variable(dataType="double", count=2)
+    # tracerSwarm.load(outputDir + "tswarm-" + stStr + ".h5")
+    # tincord.load(outputDir + "tcoords-" + stStr + ".h5")
+    # ic = tincord.data
+    # tcord = tracerSwarm.data
+    with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
+        tcord = f["data"][()]
+    with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
+        ic = f["data"][()]
     velocityField.load(outputDir + "velocity-" + stStr + ".h5")
     # isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 0.725)
     # isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 0.99) & (ic[:, 0] < 1.00))
@@ -186,11 +190,11 @@ for i in np.arange(0, time[-1][0], 50):
     # Mask For The Trench
     sp = np.copy(tcord[isSubductingPlate])
     tr = np.copy(tcord[isNearTrench])
-    print(tr)
+    # print(tr)
     velt.append(velocityField.evaluate(tr))
     velsp.append(velocityField.evaluate(sp))
 # vel.shape
-velsp.shape
+# velsp.shape
 velt = np.array(velt)
 velsp = np.array(velsp)
 x = np.arange(0, time[-1][0], 50)
@@ -199,15 +203,15 @@ ndT = []
 for i in np.arange(0, time[-1][0], 50):
     ndT.append(time[time[:, 0] == i, 1])
 ndT = np.array(ndT)
-
+# % matplotlib
 plt.plot(
-    dm(ndT[1:], u.megayear), dm(-velt[61:, 1, 0], u.centimeter / u.year), label="vTM"
+    dm(ndT[1:], u.megayear), dm(-velt[1:, 1, 0], u.centimeter / u.year), label="vTM2"
 )
 plt.plot(
-    dm(ndT[1:], u.megayear), -dm(velsp[61:, 2, 0], u.centimeter / u.year), label="vSM-"
+    dm(ndT[1:], u.megayear), dm(velsp[1:, 2, 0], u.centimeter / u.year), label="vSM-2"
 )
-plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t$")
-plt.plot(dm(time[1:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_s$")
+plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t$2")
+plt.plot(dm(time[1:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_s$2")
 plt.legend()
 
 plt.xlabel("Time in megayear")
