@@ -100,25 +100,38 @@ time = np.genfromtxt(outputDir + "/tRcheckpoint.log", delimiter=",")
 
 time[-1]
 trC = []
-# time.shape
-# time
-# time[:, 0][-1]
-# time.shape
+spC = []
 for i in time[:, 0]:
     stStr = str(int(i)).zfill(5)
     with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
-        tCoord = f["data"][()]
+        tcord = f["data"][()]
     with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
         ic = f["data"][()]
-    # isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.99) & (ic[:, 0] < 2.01))
-    isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 2.0)  # Mask For The Trench
-    tr = np.copy(tCoord[isNearTrench])
+    isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.99) & (ic[:, 0] < 2.01))
+    isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
+    # Mask For The Trench
+    sp = np.copy(tcord[isSubductingPlate])
+    tr = np.copy(tcord[isNearTrench])
+    spC.append(np.average(sp[:, 0]))
     trC.append(np.average(tr[:, 0]))
 # %matplotlib
+plt.plot(ic[:, 0], ic[:, 1])
 trC = np.array(trC)
+spC = np.array(spC)
 # %matplotlib
-plt.scatter(dm(time[:, 1], u.megayear), trC, s=1)
+# plt.plot(vt)
 
+trDx = trC[0:-1] - trC[1:]
+spDx = spC[1:] - spC[0:-1]
+dt = time[1:, 1] - time[0:-1, 1]
+vt = trDx / dt
+vs = spDx / dt
+time.shape
+
+plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t$")
+plt.plot(dm(time[1:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_s$")
+plt.legend()
+# ! head ./4x12_8-00175_hiSpEta/runLog.log -n 100
 mesh = uw.mesh.FeMesh_Cartesian(
     elementType=("Q1/dQ0"),
     elementRes=(xRes, yRes),
@@ -134,6 +147,9 @@ pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
 tracerSwarm = uw.swarm.Swarm(mesh=mesh)
 tincord = tracerSwarm.add_variable(dataType="double", count=2)
 
+f = glucifer.Figure(figsize=(1300, 444))
+f.viewer()
+
 
 def load_mesh_vars(step):
     if uw.rank() == 0:
@@ -148,9 +164,11 @@ def load_mesh_vars(step):
     # return mesh.save(outputDir + "mesh.00000.h5")
 
 
+isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
+tcord[isSubductingPlate]
 time
-vel = []
-vel2 = []
+velsp = []
+velt = []
 for i in np.arange(0, time[-1][0], 50):
     stStr = str(int(i)).zfill(5)
     tracerSwarm = uw.swarm.Swarm(mesh=mesh)
@@ -161,13 +179,20 @@ for i in np.arange(0, time[-1][0], 50):
     tcord = tracerSwarm.data
     velocityField.load(outputDir + "velocity-" + stStr + ".h5")
     # isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 0.725)
-    isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 0.99) & (ic[:, 0] < 1.00))
-    tr = tcord[isNearTrench]
+    # isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 0.99) & (ic[:, 0] < 1.00))
+    # tr = tcord[isNearTrench]
+    isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.99) & (ic[:, 0] < 2.01))
+    isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
+    # Mask For The Trench
+    sp = np.copy(tcord[isSubductingPlate])
+    tr = np.copy(tcord[isNearTrench])
     print(tr)
-    vel2.append(velocityField.evaluate(tr))
-vel2.shape
-vel2 = np.array(vel2)
-
+    velt.append(velocityField.evaluate(tr))
+    velsp.append(velocityField.evaluate(sp))
+# vel.shape
+velsp.shape
+velt = np.array(velt)
+velsp = np.array(velsp)
 x = np.arange(0, time[-1][0], 50)
 time[-1]
 ndT = []
@@ -175,10 +200,15 @@ for i in np.arange(0, time[-1][0], 50):
     ndT.append(time[time[:, 0] == i, 1])
 ndT = np.array(ndT)
 
-plt.plot(dm(ndT[1:], u.megayear), dm(-vel[1:, 0, 0], u.centimeter / u.year))
 plt.plot(
-    dm(np.array(ndT)[1:], u.megayear), -dm(vel2[1:, -1, 0], u.centimeter / u.year), "."
+    dm(ndT[1:], u.megayear), dm(-velt[61:, 1, 0], u.centimeter / u.year), label="vTM"
 )
+plt.plot(
+    dm(ndT[1:], u.megayear), -dm(velsp[61:, 2, 0], u.centimeter / u.year), label="vSM-"
+)
+plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t$")
+plt.plot(dm(time[1:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_s$")
+plt.legend()
 
 plt.xlabel("Time in megayear")
 plt.ylabel("$Vx_{t}$ and $Vx_{sp}$ in centimeters/year")
