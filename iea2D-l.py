@@ -59,10 +59,10 @@ else:
 
 uw.barrier()
 
-# rstep = 400
+rstep = 350
 # rtimeDm = 0
-# clearLog = False
-# restartFlag = False
+clearLog = False
+restartFlag = True
 if restartFlag:
     step = rstep
 
@@ -961,18 +961,24 @@ figStrainRate.Surface(
 )
 figStrainRate.objects[0].colourBar["tickvalues"] = [2e-6, 1e-5, 1e-4, 1e-3, 1e-2]
 if restartFlag is False:
-    figStrainRate.save()
+    figStrainRate.save("sr")
 
 # solver.solve(nonLinearIterate=False)
+from colorMaps import varP
 
-# figPressure = glucifer.Figure(
-#     store, figsize=figSize,  Name="Pressure Map")
-# figPressure.Surface(mesh,
-#                     pressureField,
-#                     colours=glucifer.lavavu.matplotlib_colourmap("inferno_r"),
-#                     onMesh=True)
+varP.cm_data.reverse()
+figPressure = glucifer.Figure(store, figsize=figSize, Name="Pressure Map")
+figPressure.Surface(
+    mesh,
+    pressureField,
+    colours=varP.cm_data,
+    valueRange=[nd(-600.0 * u.megapascal), nd(600.0 * u.megapascal)],
+    onMesh=True,
+)
+figPressure.save("prnb2")
 # if restartFlag is False:
 #     figPressure.save()
+
 
 viscStress = 2.0 * viscosityMapFn * strainRate
 # figStress = glucifer.Figure(store, name="Stress", figsize=figSize,quality=3)
