@@ -979,16 +979,19 @@ figPressure.save("prnb2")
 # if restartFlag is False:
 #     figPressure.save()
 
+projVisMesh.solve()
+viscStress = 2.0 * projVisc * strainRate
 
-viscStress = 2.0 * viscosityMapFn * strainRate
-# figStress = glucifer.Figure(store, name="Stress", figsize=figSize,quality=3)
-# figStress.append(glucifer.objects.Points(
-#     swarm, 2.0*viscosityMapFn*strainRate_2ndInvariant, pointSize=2, logScale=True))
-# figStressXX = glucifer.Figure(
-#     store, name="Stress_XX", figsize=figSize, quality=3)
-# figStressXX.append(glucifer.objects.Points(
-#     swarm, viscStress[0], pointsize=2, colours='spectral'))
-# figStress.save()
+figdevStress = glucifer.Figure(store, name="Stress", figsize=figSize, quality=3)
+figdevStress.Surface(mesh, viscStress[0], onMesh=True)
+figdevStress.show()
+figStressXX = glucifer.Figure(store, name="Stress_XX", figsize=figSize, quality=3)
+figStressXX.append(
+    glucifer.objects.Points(swarm, viscStress[0], pointsize=2, colours="spectral")
+)
+figStressXX.show()
+# figStress.show()
+# figStress.save("Stress")
 
 top = mesh.specialSets["MaxJ_VertexSet"]
 surfaceArea = uw.utils.Integral(
