@@ -19,6 +19,7 @@ import glucifer
 # import tokyo
 import numpy as np
 from colorMaps import coldmorning as coldmorning
+from colorMaps import vlike as vlike
 
 import pickle
 import json
@@ -923,7 +924,7 @@ figbuoyancy.Points(
     swarm,
     densityFn * nd(gravity),
     pointsize=3,
-    colours="Black Blue (0.00)white Green Red"
+    colours="Black Blue (0.00)white ForestGreen Red"
     # colours=list(glucifer.lavavu.matplotlib_colourmap("Accent")),
 )
 figbuoyancy.objects[0].colourBar["tickvalues"] = [-5, -0.25, 0.0, 0.25, 0.5, 1]
@@ -981,12 +982,13 @@ advector = uw.systems.SwarmAdvector(swarm=swarm, velocityField=velocityField, or
 vdotv = fn.math.dot(velocityField, velocityField)
 figVelocityMag = glucifer.Figure(store, figsize=figSize, name="Velocity Magnitude")
 # tokyo.cm_data.reverse()
+vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    valueRange=[0, 1e-3],
+    # valueRange=[0, 1e-3],
     # logScale=True,
-    colours=glucifer.lavavu.matplotlib_colourmap("plasma_r"),
+    colours=vlike.cm_data,
     # colours=tokyo.cm_data,
     onMesh=True,
 )
