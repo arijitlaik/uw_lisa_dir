@@ -70,7 +70,7 @@ else:
     sTime = 0
 
 maxSteps = step + 3000
-imSteps = 25
+imSteps = 4
 cpSteps = 50
 trSteps = 5
 
@@ -1246,7 +1246,7 @@ while step < maxSteps:
     time, step, dt = model_update()
     dmTime = dm(time, 1.0 * u.megayear).magnitude
 
-    if step % imSteps == 0 or step == maxSteps - 1:
+    if step % imSteps == 1 or step == maxSteps - 1:
         output_figures(step)
 
     if uw.rank() == 0:
@@ -1259,7 +1259,9 @@ while step < maxSteps:
         # print dt
         # print time
         if timingFlag:
-            uw.timing.print_table(output_file=outputDir + "/uwTimer.log")
+            uw.timing.print_table(
+                output_file=outputDir + "/uwTimer.log", display_fraction=0.999
+            )
             uw.timing.start()
 
         print(stepLog)
