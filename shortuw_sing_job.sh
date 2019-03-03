@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -p short
-#SBATCH --nodes=4
+#SBATCH --nodes=1
 # SBATCH --constraint=infiniband,avx2
 # SBATCH --constraint=infiniband
 #SBATCH --tasks-per-node 12
@@ -23,7 +23,7 @@ echo 'UW_VERSION: '$IMAGE_VERSION
 
 echo "********** Run Started **********"
 
-srun -n 48 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python iea2Da.py
+srun -n 16 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python iea2Da.py
 
 echo "********** XXXXXXXXXXX **********"
 

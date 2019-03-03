@@ -129,7 +129,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 2  # 64 being the base vRes
+resMult = 3  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
