@@ -1238,7 +1238,7 @@ while step < maxSteps:
     solver.solve(
         nonLinearIterate=True,
         nonLinearTolerance=ntol,
-        # callback_post_solve=pressure_calibrate,
+        callback_post_solve=pressure_calibrate,
     )
 
     Vrms = np.sqrt(mesh.integrate(vdotv)[0] / mesh.integrate(1.0)[0])
@@ -1304,6 +1304,6 @@ while step < maxSteps:
 
 if uw.rank() == 0:
     with open(outputDir + "/runLog.log", "a") as logfile:
-        logFile.write("\n===================================================\n")
-        logFile.write("\nTimestamp: {0} \n".format(datetime.datetime.now()))
-        logFile.write("\n***************************************************\n")
+        logfile.write("\n===================================================\n")
+        logfile.write("\nTimestamp: {0} \n".format(datetime.datetime.now()))
+        logfile.write("\n***************************************************\n")
