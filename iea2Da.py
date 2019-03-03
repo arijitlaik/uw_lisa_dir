@@ -130,7 +130,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 8  # 64 being the base vRes
+resMult = 2  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -561,23 +561,23 @@ overRidingShapesForeArc = make_overRidingPlate2d(
     length=-nd(2.0 * modelHeight),
     taper=90,
     dip=29,
-    thicknessArray=[nd(30.0 * u.kilometer), nd(40.0 * u.kilometer)],
+    thicknessArray=[nd(30.0 * u.kilometer), nd(30.0 * u.kilometer)],
 )
 overRidingShapesBackArc = make_overRidingPlate2d(
     topX=mesh.maxCoord[0] - mesh.minCoord[0],
     topY=nd(0.0 * u.kilometer),
-    length=-nd(2.0- * modelHeight),
+    length=-nd((2.0 - 0.075) * modelHeight),
     taper=90,
     dip=90,
-    thicknessArray=[nd(30.0 * u.kilometer), nd(40.0 * u.kilometer)],
+    thicknessArray=[nd(30.0 * u.kilometer), nd(30.0 * u.kilometer)],
 )
 overRidingShapes = make_overRidingPlate2d(
     topX=mesh.maxCoord[0] - mesh.minCoord[0],
     topY=nd(0.0 * u.kilometer),
-    length=nd(-1.9 * modelHeight),
+    length=-nd((2.0 - 0.25) * modelHeight),
     taper=90,
-    dip=18,
-    thicknessArray=[nd(30.0 * u.kilometer), nd(80.0 * u.kilometer)],
+    dip=21,
+    thicknessArray=[nd(40.0 * u.kilometer), nd(80.0 * u.kilometer)],
 )
 
 # define the viscosity Range
@@ -735,15 +735,27 @@ modelMaterials = [
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
+        "name": "Crust Eurasian Plate BackArc",
+        "shape": overRidingShapesBackArc[0],
+        "viscosity": 2.5e2 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
+    },
+    {
+        "name": "Lithospheric Mantle Eurasian Plate BackArc",
+        "shape": overRidingShapesBackArc[1],
+        "viscosity": 1.25e2 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
+    },
+    {
         "name": "Crust Eurasian Plate",
         "shape": overRidingShapes[0],
-        "viscosity": 5e2 * refViscosity,
+        "viscosity": 2e3 * refViscosity,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate",
         "shape": overRidingShapes[1],
-        "viscosity": 2e2 * refViscosity,
+        "viscosity": 1e3 * refViscosity,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
 ]
@@ -859,7 +871,7 @@ figViscosityMesh.Surface(
 # colours="Cyan Green ForestGreen Grey Orange Brown Blue Black")
 # figViscosityMesh.Mesh(mesh)
 
-figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-2, 4, 7).tolist()
+figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-1, 4, 6).tolist()
 if restartFlag is False:
     figViscosityMesh.save(outputDir + "/ViscosityMesh_Initial_3")
 
@@ -1227,7 +1239,7 @@ while step < maxSteps:
     solver.solve(
         nonLinearIterate=True,
         nonLinearTolerance=ntol,
-        callback_post_solve=pressure_calibrate,
+        # callback_post_solve=pressure_calibrate,
     )
 
     Vrms = np.sqrt(mesh.integrate(vdotv)[0] / mesh.integrate(1.0)[0])
