@@ -6,7 +6,7 @@
 import os
 import sys
 
-os.environ["UW_ENABLE_TIMING"] = "1"
+# os.environ["UW_ENABLE_TIMING"] = "1"
 import underworld as uw
 from underworld import function as fn
 
@@ -16,7 +16,6 @@ from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
 import glucifer
 
 # import colorcet as cc
-
 # import tokyo
 import numpy as np
 from colorMaps import coldmorning as coldmorning
