@@ -4,7 +4,7 @@
 # SBATCH --constraint=infiniband,avx2
 # SBATCH --constraint=infiniband
 #SBATCH --tasks-per-node 12
-#SBATCH --time=00:04:00
+#SBATCH --time=00:05:00
 
 echo "********** CPU-INFO **********"
 lscpu
