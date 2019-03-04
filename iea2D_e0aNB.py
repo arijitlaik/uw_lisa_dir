@@ -670,7 +670,7 @@ modelMaterials = [
         "shape": indentorshapes[1],
         "viscosity": 1e2 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "density": 3280.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -681,7 +681,7 @@ modelMaterials = [
         "shape": indentorshapes[2],
         "viscosity": 1e3 * refViscosity,
         "cohesion": 350.0 * u.megapascal,
-        "density": 3200.0 * u.kilogram / u.meter ** 3,
+        "density": 3280.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":3200.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -692,7 +692,7 @@ modelMaterials = [
         "shape": indentorshapes[3],
         "viscosity": 5e1 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
-        "density": 3220.0 * u.kilogram / u.meter ** 3
+        "density": 3280.0 * u.kilogram / u.meter ** 3
         # "density":"deptDependent",
         # "rho0":3220.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
