@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import h5py
 import numpy as np
 
-plt.ion()
 # import sys
 # import datetime
 # import pickle
@@ -25,7 +24,7 @@ refDensity = 3200.0 * u.kilogram / u.meter ** 3
 deltaRhoMax = 80.0 * u.kilogram / u.meter ** 3
 gravity = 9.8 * u.metre / u.second ** 2
 # 1.57e20 * u.pascal * u.second 5.e20 * u.pascal * u.second
-refViscosity = 2e20 * u.pascal * u.second
+refViscosity = 5e20 * u.pascal * u.second
 bodyForce = deltaRhoMax * gravity
 
 # scaling coefficients
@@ -64,13 +63,12 @@ CFL = 1.0  # 0.1*refInt[1]*yRes
 
 # **READ/PARSE LOGS** #
 # =================== #
-
-outputDirName = "/run/user/1000/gvfs/sftp:host=lisa.surfsara.nl,user=alaik/home/alaik/uw/4x12_8-00175_DrhoLM30/"
+setPostFix = "50"
+outputDirName = "/Volumes/GoogleDrive/My Drive/EXPSET-e/" + setPostFix
 # outputDirName = "sftp://alaik@lisa.surfsara.nl/home/alaik/uw/4x12_8-00175_DrhoLM00"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 
-time = np.genfromtxt(outputDir + "/tcheckpoint.log", delimiter=",")
-
+time = np.genfromtxt(outputDir + "tcheckpoint.log", delimiter=",")
 trC = np.zeros_like(time[:, 0])
 spC = np.zeros_like(time[:, 0])
 opBaC = np.zeros_like(time[:, 0])
@@ -102,7 +100,14 @@ for index, step in enumerate(time[:, 0]):
     opBaC[index] = np.average(opBA[:, 0])
     opFaC[index] = np.average(opFA[:, 0])
     trC[index] = np.average(tr[:, 0])
-
+opD = "SET_e_TracerPorcessed/"
+np.save(opD + setPostFix + "trc", trC)
+np.save(opD + setPostFix + "spc", spC)
+np.save(opD + setPostFix + "bac", opBaC)
+np.save(opD + setPostFix + "fac", opFaC)
+# %matplotlib
+plt.style.use("seaborn")
+# plt.figure()
 # Calcutae Dx,Dt and V #
 trDx = trC[0:-1] - trC[1:]
 spDx = spC[1:] - spC[0:-1]
@@ -114,8 +119,13 @@ vsp = spDx / dt
 vb = opBaDx / dt
 vf = opFaDx / dt
 # time.shape
-
-# %matplotlib
+opD = "SET_e_TracerPorcessed/"
+np.save(opD + setPostFix + "trc", trC)
+np.save(opD + setPostFix + "spc", spC)
+np.save(opD + setPostFix + "bac", opBaC)
+np.save(opD + setPostFix + "fac", opFaC)
+np.save(opD + setPostFix + "time", time)
+# %ma tplotlib
 plt.style.use("seaborn")
 # plt.figure()
 plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t0$")
