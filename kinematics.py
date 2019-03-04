@@ -69,16 +69,23 @@ outputDirName = "/Volumes/GoogleDrive/My Drive/EXPSET-e/" + setPostFix
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 
 time = np.genfromtxt(outputDir + "tcheckpoint.log", delimiter=",")
+time = np.insert(time, 0, [0.0, 0.0], axis=0)
+
 trC = np.zeros_like(time[:, 0])
 spC = np.zeros_like(time[:, 0])
 opBaC = np.zeros_like(time[:, 0])
 opFaC = np.zeros_like(time[:, 0])
+vtr = np.zeros_like(time[:, 0])
+vs = np.zeros_like(time[:, 0])
+
 for index, step in enumerate(time[:, 0]):
+    # step = 100
     stStr = str(int(step)).zfill(5)
     # Tracer Coordinated from Tracer Swarm
     with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
         tcord = f["data"][()]
-
+    with h5py.File(outputDir + "tvel-" + stStr + ".h5", "r") as f:
+        tvel = f["data"][()]
     # Initial Tracer Coordinated from Tracer Coords Swarm Variable
     with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
         ic = f["data"][()]
@@ -95,17 +102,25 @@ for index, step in enumerate(time[:, 0]):
     opBA = np.copy(tcord[isOverRidingPlateBA])
     opFA = np.copy(tcord[isOverRidingPlateFA])
 
+    _vsp = np.copy(tvel[isSubductingPlate])
+    _vt = np.copy(tvel[isNearTrench])
+    _vt
+    vs[index] = np.average(_vsp[:, 0])
+    vtr[index] = np.average(_vt[:, 0])
+    vtr
     # Averaging The X's
     spC[index] = np.average(sp[:, 0])
     opBaC[index] = np.average(opBA[:, 0])
     opFaC[index] = np.average(opFA[:, 0])
     trC[index] = np.average(tr[:, 0])
-opD = "SET_e_TracerPorcessed/"
-np.save(opD + setPostFix + "trc", trC)
-np.save(opD + setPostFix + "spc", spC)
-np.save(opD + setPostFix + "bac", opBaC)
-np.save(opD + setPostFix + "fac", opFaC)
-# %matplotlib
+
+vtr[0] = 0
+# opD = "SET_e_TracerPorcessed/"
+# np.save(opD + setPostFix + "trc", trC)
+# np.save(opD + setPostFix + "spc", spC)
+# np.save(opD + setPostFix + "bac", opBaC)
+# np.save(opD + setPostFix + "fac", opFaC)
+# # %matplotlib
 plt.style.use("seaborn")
 # plt.figure()
 # Calcutae Dx,Dt and V #
@@ -128,8 +143,11 @@ np.save(opD + setPostFix + "time", time)
 # %ma tplotlib
 plt.style.use("seaborn")
 # plt.figure()
+# %matplotlib
 plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t0$")
-plt.plot(dm(time[1:, 1], u.megayear), dm(vsp, u.centimeter / u.year), label="$V_{sp}0$")
+plt.plot(dm(time[:, 1], u.megayear), -dm(vtr, u.centimeter / u.year), label="$V_tE$")
+
+plt.plot(dm(time[:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_{sp}0$")
 plt.plot(
     dm(time[1:, 1], u.megayear), dm(vsp - vt, u.centimeter / u.year), label="$V_c0$"
 )
