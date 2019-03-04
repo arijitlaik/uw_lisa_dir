@@ -6,7 +6,7 @@
 import os
 import sys
 
-os.environ["UW_ENABLE_TIMING"] = "1"
+# os.environ["UW_ENABLE_TIMING"] = "1"
 import underworld as uw
 from underworld import function as fn
 
@@ -16,10 +16,8 @@ from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
 import glucifer
 
 # import colorcet as cc
-
 # import tokyo
 import numpy as np
-
 from colorMaps import coldmorning as coldmorning
 from colorMaps import vlike as vlike
 
@@ -33,8 +31,8 @@ import datetime
 #
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
-outputDirName = "4x12_8-00175_DrhoLM00_a"
-# outputDirName = "tea2"
+# outputDirName = "4x12_8-00175_hiSpEta"
+outputDirName = "tea2_NU"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
     if not os.path.exists(outputDir):
@@ -73,7 +71,7 @@ else:
     sTime = 0
 
 maxSteps = step + 3000
-imSteps = 25
+imSteps = 4
 cpSteps = 50
 trSteps = 5
 
@@ -132,7 +130,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 8  # 64 being the base vRes
+resMult = 3  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -182,7 +180,9 @@ figSize = (1600 * 2, int(1600 / aRatioCoor) * 2 + 110)
 
 # setupStore = glucifer.Store(outputDir+"/setup")
 setupStore = None
-figMesh = glucifer.Figure(store=setupStore, figsize=figSize, quality=3)
+figMesh = glucifer.Figure(
+    store=setupStore, figsize=figSize, quality=3, boundingBox=bBox
+)
 figMesh.Mesh(mesh)
 # # figMesh.save()
 figMesh.save(outputDir + "/MeshInit2.png")
@@ -191,6 +191,23 @@ if restartFlag is False:
     if uw.rank() == 0:
         print("Deforming Mesh.....!")
 
+    # if refineHoriz:
+    #     xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
+    #     cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
+    #     xL = np.arange(cenX, cenX + refRange[0] / 2.0, refInt[0])
+    #     xG = np.geomspace(
+    #         cenX + refRange[0] / 2,
+    #         mesh.maxCoord[0],
+    #         mesh.elementRes[0] / 2.0 - xL.size + 1,
+    #     )
+    #     # xG = np.linspace(
+    #     #     cenX + refRange[0]/2, mesh.maxCoord[0], mesh.elementRes[0]/2. - xL.size+1)
+    #     assert mesh.elementRes[0] / 2 - (xL.size + xG.size) == -1
+    #     xR = np.concatenate((xL, xG), axis=0)
+    #     xrF = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xR, axis=0)
+    #     xR = np.concatenate((xrF, xR), axis=0)
+    #     xR = np.delete(xR, xR.size / 2)
+    #     assert mesh.elementRes[0] + 1 - xR.size == 0
     if refineHoriz:
         xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
         cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
@@ -544,15 +561,22 @@ overRidingShapesForeArc = make_overRidingPlate2d(
     length=-nd(2.0 * modelHeight),
     taper=90,
     dip=29,
-    thicknessArray=[nd(40.0 * u.kilometer), nd(80.0 * u.kilometer)],
+    thicknessArray=[nd(30.0 * u.kilometer), nd(30.0 * u.kilometer)],
 )
-
+overRidingShapesBackArc = make_overRidingPlate2d(
+    topX=mesh.maxCoord[0] - mesh.minCoord[0],
+    topY=nd(0.0 * u.kilometer),
+    length=-nd((2.0 - 0.075) * modelHeight),
+    taper=90,
+    dip=90,
+    thicknessArray=[nd(30.0 * u.kilometer), nd(30.0 * u.kilometer)],
+)
 overRidingShapes = make_overRidingPlate2d(
     topX=mesh.maxCoord[0] - mesh.minCoord[0],
     topY=nd(0.0 * u.kilometer),
-    length=nd(-1.875 * modelHeight),
+    length=-nd((2.0 - 0.25) * modelHeight),
     taper=90,
-    dip=90,
+    dip=21,
     thicknessArray=[nd(40.0 * u.kilometer), nd(80.0 * u.kilometer)],
 )
 
@@ -604,7 +628,7 @@ modelMaterials = [
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
         "rho0": 3200.0 * u.kilogram / u.meter ** 3,
-        "rho1": 3200.0 * u.kilogram / u.meter ** 3,
+        "rho1": 3230.0 * u.kilogram / u.meter ** 3,
         "rhoChangeDepth": 660.0 * u.kilometer,
     },
     # {"name": 'Upper Mantle',
@@ -630,21 +654,21 @@ modelMaterials = [
     {
         "name": "Lower Crust Indo-Australian Plate",
         "shape": slabshapes[1],
-        "viscosity": 1e2 * refViscosity,
+        "viscosity": 1e3 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
         "density": 3280.0 * u.kilogram / u.meter ** 3,
     },  # 5.*u.megapascal,
     {
         "name": "Lithospheric Mantle Crust Indo-Australian Plate",
         "shape": slabshapes[2],
-        "viscosity": 1e3 * refViscosity,
-        "cohesion": 350.0 * u.megapascal,  # hs
+        "viscosity": 1e5 * refViscosity,
+        "cohesion": 400.0 * u.megapascal,  # hs
         "density": 3280.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Indo-Australian Plate",
         "shape": slabshapes[3],
-        "viscosity": 5e1 * refViscosity,
+        "viscosity": 5e2 * refViscosity,
         "density": 3280.0 * u.kilogram / u.meter ** 3,
         "cohesion": 30.0 * u.megapascal,
     },
@@ -678,8 +702,8 @@ modelMaterials = [
     {
         "name": "Lithospheric Mantle Indian Indentor",
         "shape": indentorshapes[2],
-        "viscosity": 1e3 * refViscosity,
-        "cohesion": 350.0 * u.megapascal,
+        "viscosity": 1e5 * refViscosity,
+        "cohesion": 400.0 * u.megapascal,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":3200.*u.kilogram / u.meter**3,
@@ -689,7 +713,7 @@ modelMaterials = [
     {
         "name": "Lithospheric Mantle Indian Indentor",
         "shape": indentorshapes[3],
-        "viscosity": 5e1 * refViscosity,
+        "viscosity": 5e4 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
         "density": 3220.0 * u.kilogram / u.meter ** 3
         # "density":"deptDependent",
@@ -711,15 +735,27 @@ modelMaterials = [
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
+        "name": "Crust Eurasian Plate BackArc",
+        "shape": overRidingShapesBackArc[0],
+        "viscosity": 2.5e2 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
+    },
+    {
+        "name": "Lithospheric Mantle Eurasian Plate BackArc",
+        "shape": overRidingShapesBackArc[1],
+        "viscosity": 1.25e2 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
+    },
+    {
         "name": "Crust Eurasian Plate",
         "shape": overRidingShapes[0],
-        "viscosity": 5e2 * refViscosity,
+        "viscosity": 2e3 * refViscosity,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate",
         "shape": overRidingShapes[1],
-        "viscosity": 2e2 * refViscosity,
+        "viscosity": 1e3 * refViscosity,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
 ]
@@ -818,7 +854,7 @@ projVisc = mesh.add_variable(1)
 projVisMesh = uw.utils.MeshVariable_Projection(projVisc, viscosityMapFn, type=0)
 projVisMesh.solve()
 
-vlike.cm_data.reverse()
+# vlike.cm_data.reverse()
 figViscosityMesh = glucifer.Figure(store, figsize=figSize, name="Viscosity Map")
 figViscosityMesh.Surface(
     mesh,
@@ -835,7 +871,7 @@ figViscosityMesh.Surface(
 # colours="Cyan Green ForestGreen Grey Orange Brown Blue Black")
 # figViscosityMesh.Mesh(mesh)
 
-figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-2, 4, 7).tolist()
+figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-1, 4, 6).tolist()
 if restartFlag is False:
     figViscosityMesh.save(outputDir + "/ViscosityMesh_Initial_3")
 
@@ -888,7 +924,7 @@ figbuoyancy.Points(
     swarm,
     densityFn * nd(gravity),
     pointsize=3,
-    colours="Black Blue (0.00)white Green Red"
+    colours="Black Blue (0.00)white ForestGreen Red"
     # colours=list(glucifer.lavavu.matplotlib_colourmap("Accent")),
 )
 figbuoyancy.objects[0].colourBar["tickvalues"] = [-5, -0.25, 0.0, 0.25, 0.5, 1]
@@ -946,12 +982,13 @@ advector = uw.systems.SwarmAdvector(swarm=swarm, velocityField=velocityField, or
 vdotv = fn.math.dot(velocityField, velocityField)
 figVelocityMag = glucifer.Figure(store, figsize=figSize, name="Velocity Magnitude")
 # tokyo.cm_data.reverse()
+vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    valueRange=[0, 1e-4],
-    logScale=True,
-    colours=glucifer.lavavu.matplotlib_colourmap("inferno_r"),
+    # valueRange=[0, 1e-3],
+    # logScale=True,
+    colours=vlike.cm_data,
     # colours=tokyo.cm_data,
     onMesh=True,
 )
@@ -1211,7 +1248,7 @@ while step < maxSteps:
     time, step, dt = model_update()
     dmTime = dm(time, 1.0 * u.megayear).magnitude
 
-    if step % imSteps == 0 or step == maxSteps - 1:
+    if step % imSteps == 1 or step == maxSteps - 1:
         output_figures(step)
 
     if uw.rank() == 0:
@@ -1224,7 +1261,9 @@ while step < maxSteps:
         # print dt
         # print time
         if timingFlag:
-            uw.timing.print_table(output_file=outputDir + "/uwTimer.log")
+            uw.timing.print_table(
+                output_file=outputDir + "/uwTimer.log", display_fraction=0.999
+            )
             uw.timing.start()
 
         print(stepLog)

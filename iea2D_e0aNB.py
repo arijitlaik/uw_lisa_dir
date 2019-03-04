@@ -33,7 +33,8 @@ import datetime
 #
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
-outputDirName = "4x12_8-00175_DrhoLM00_a"
+# outputDirName = "4x12_8-00175_DrhoLM00_a"
+outputDirName = "4x12_8-00175_DrhoLM00_a_indNB"
 # outputDirName = "tea2"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -818,7 +819,7 @@ projVisc = mesh.add_variable(1)
 projVisMesh = uw.utils.MeshVariable_Projection(projVisc, viscosityMapFn, type=0)
 projVisMesh.solve()
 
-vlike.cm_data.reverse()
+# vlike.cm_data.reverse()
 figViscosityMesh = glucifer.Figure(store, figsize=figSize, name="Viscosity Map")
 figViscosityMesh.Surface(
     mesh,
@@ -945,16 +946,17 @@ advector = uw.systems.SwarmAdvector(swarm=swarm, velocityField=velocityField, or
 
 vdotv = fn.math.dot(velocityField, velocityField)
 figVelocityMag = glucifer.Figure(store, figsize=figSize, name="Velocity Magnitude")
-# tokyo.cm_data.reverse()
+vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    valueRange=[0, 1e-4],
-    logScale=True,
-    colours=glucifer.lavavu.matplotlib_colourmap("inferno_r"),
+    # valueRange=[0, 1e-3],
+    # logScale=True,
+    colours=vlike.cm_data,
     # colours=tokyo.cm_data,
     onMesh=True,
 )
+figVelocityMag.save()
 figVelocityMag.save()
 
 figStrainRate = glucifer.Figure(store, figsize=figSize, name="Strain Rate")
