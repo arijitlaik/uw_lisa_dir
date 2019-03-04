@@ -1,11 +1,12 @@
-import sys
+# import sys
 import underworld as uw
 from underworld import function as fn
 from underworld.scaling import units as u
 from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
 import matplotlib.pyplot as plt
 import h5py
-import datetime
+
+# import datetime
 import json
 import pickle
 import numpy as np
@@ -13,13 +14,6 @@ import glucifer
 import os
 
 os.environ["UW_ENABLE_TIMING"] = "1"
-
-
-# import colorcet as cc
-
-# import tokyo
-
-# from colorMaps import coldmorning as coldmorning
 
 
 class QuanityEncoder(json.JSONEncoder):
@@ -35,7 +29,7 @@ class QuanityEncoder(json.JSONEncoder):
 
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
-outputDirName = "/Users/arijit/Documents/research/lisa/uw/4x12_8-00175_hiSpEta"
+outputDirName = "4x12_8-00175_hiSpEta"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
     if not os.path.exists(outputDir):
@@ -87,153 +81,161 @@ dt = 0.0
 CFL = 1.0
 
 
-outputDir = "/Users/arijit/Documents/research/lisa/uw/4x12_8-00175_hiSpEta/"
+outputDir = "/run/user/1000/gvfs/sftp:host=lisa.surfsara.nl,user=alaik/home/alaik/uw/4x12_8-00175_DrhoLM50/"
 
-fH = open(outputDir + "/checkpoint.log", "r")
-
-with open(outputDir + "/checkpoint.log", "r") as infile, open(
-    outputDir + "/tRcheckpoint.log", "w+"
-) as outfile:
-    temp = infile.read().replace(";", "")
-    outfile.write(temp)
-time = np.genfromtxt(outputDir + "/tRcheckpoint.log", delimiter=",")
+# fH = open(outputDir + "/checkpoint.log", "r")
+#
+# with open(outputDir + "/checkpoint.log", "r") as infile, open(
+#     outputDir + "/tRcheckpoint.log", "w+"
+# ) as outfile:
+#     temp = infile.read().replace(";", "")
+#     outfile.write(temp)
+time = np.genfromtxt(outputDir + "/tcheckpoint.log", delimiter=",")
 
 time[-1]
 trC = []
 spC = []
+opBaC = []
+opFaC = []
 for i in time[:, 0]:
     stStr = str(int(i)).zfill(5)
     with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
         tcord = f["data"][()]
     with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
         ic = f["data"][()]
-    isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.99) & (ic[:, 0] < 2.01))
+    isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.999) & (ic[:, 0] < 2.001))
     isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
+    isOverRidingPlateBA = (ic[:, 1] == 0) & (ic[:, 0] > 2.499) & (ic[:, 0] < 2.501)
+    isOverRidingPlateFA = (ic[:, 1] == 0) & (ic[:, 0] > 2.049) & (ic[:, 0] < 2.051)
+
     # Mask For The Trench
     sp = np.copy(tcord[isSubductingPlate])
     tr = np.copy(tcord[isNearTrench])
+    opBA = np.copy(tcord[isOverRidingPlateBA])
+    opFA = np.copy(tcord[isOverRidingPlateFA])
     spC.append(np.average(sp[:, 0]))
+    opBaC.append(np.average(opBA[:, 0]))
+    opFaC.append(np.average(opFA[:, 0]))
     trC.append(np.average(tr[:, 0]))
 # %matplotlib
+plt.figure()
 plt.plot(ic[:, 0], ic[:, 1])
 trC = np.array(trC)
 spC = np.array(spC)
+opBaC = np.array(opBaC)
+opFaC = np.array(opFaC)
 # %matplotlib
 # plt.plot(vt)
 
 trDx = trC[0:-1] - trC[1:]
 spDx = spC[1:] - spC[0:-1]
+opBaDx = opBaC[0:-1] - opBaC[1:]
+opFaDx = opFaC[0:-1] - opFaC[1:]
 dt = time[1:, 1] - time[0:-1, 1]
 vt = trDx / dt
-vs = spDx / dt
+vsp = spDx / dt
+vb = opBaDx / dt
+vf = opFaDx / dt
 time.shape
-
+# %matplotlib
+plt.style.use("seaborn")
+plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t$")
+plt.plot(dm(time[1:, 1], u.megayear), dm(vsp, u.centimeter / u.year), label="$V_{sp}$")
 plt.plot(
-    dm(time[1:, 1], u.megayear),
-    dm(vt, u.centimeter / u.year),
-    linewidth="2",
-    label="$Vx_{T}$",
+    dm(time[1:, 1], u.megayear), dm(vsp - vt, u.centimeter / u.year), label="$V_c$"
 )
+
+plt.plot(dm(time[1:, 1], u.megayear), dm(vb, u.centimeter / u.year), label="$V_ba$")
+plt.plot(dm(time[1:, 1], u.megayear), dm(vf, u.centimeter / u.year), label="$V_fa$")
 plt.plot(
-    dm(time[1:, 1], u.megayear),
-    dm(vs, u.centimeter / u.year),
-    linewidth="2",
-    label="$Vx_{SP}$",
+    dm(time[1:, 1], u.megayear), dm(vf - vb, u.centimeter / u.year), label="$V_{f-b}$"
 )
 
 plt.legend()
 
-plt.xlabel("Time in megayear")
-plt.ylabel("$Vx_{T}$ and $Vx_{SP}$ in centimeters/year")
-# plt.grid()
-
-
-import matplotlib.ticker as plticker
-
-loc = plticker.MultipleLocator(base=25.0)
-plt.gca().xaxis.set_major_locator(loc)
-loc = plticker.MultipleLocator(base=0.25)
-plt.gca().yaxis.set_major_locator(loc)
-print("wait")
-
 # ! head ./4x12_8-00175_hiSpEta/runLog.log -n 100
-# mesh = uw.mesh.FeMesh_Cartesian(
-#     elementType=("Q1/dQ0"),
-#     elementRes=(xRes, yRes),
-#     # minCoord=(nd(0.*u.kilometer), nd(-modelHeight+192.*u.kilometer)),
-#     minCoord=(nd(0.0 * u.kilometer), nd(-modelHeight)),
-#     # maxCoord=(nd(9600.*u.kilometer), nd(192.*u.kilometer)),
-#     maxCoord=(aRatioCoor * nd(modelHeight), nd(0.0 * u.kilometer)),
-#     periodic=[False, False],
-# )
-#
-# velocityField = mesh.add_variable(nodeDofCount=mesh.dim)
-# pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
-# tracerSwarm = uw.swarm.Swarm(mesh=mesh)
-# tincord = tracerSwarm.add_variable(dataType="double", count=2)
-#
-# f = glucifer.Figure(figsize=(1300, 444))
-# f.viewer()
-#
-#
-# def load_mesh_vars(step):
-#     if uw.rank() == 0:
-#         print("Loading Mesh.....")
-#     # mh =
-#     mesh.load(outputDir + "/mesh.00000.h5")
-#
-#     velocityField.load(outputDir + "velocity-" + str(step).zfill(5) + ".h5")
-#     pressureField.load(outputDir + "pressure-" + str(step).zfill(5) + ".h5")
-#     if uw.rank() == 0:
-#         print("Loading Mesh......Done!")
-#     # return mesh.save(outputDir + "mesh.00000.h5")
-#
-#
+mesh = uw.mesh.FeMesh_Cartesian(
+    elementType=("Q1/dQ0"),
+    elementRes=(xRes, yRes),
+    # minCoord=(nd(0.*u.kilometer), nd(-modelHeight+192.*u.kilometer)),
+    minCoord=(nd(0.0 * u.kilometer), nd(-modelHeight)),
+    # maxCoord=(nd(9600.*u.kilometer), nd(192.*u.kilometer)),
+    maxCoord=(aRatioCoor * nd(modelHeight), nd(0.0 * u.kilometer)),
+    periodic=[False, False],
+)
+mesh.load(outputDir + "/mesh.h5")
+velocityField = mesh.add_variable(nodeDofCount=mesh.dim)
+pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
+tracerSwarm = uw.swarm.Swarm(mesh=mesh)
+tincord = tracerSwarm.add_variable(dataType="double", count=2)
+
+f = glucifer.Figure(figsize=(1300, 444))
+f.viewer()
+
+
+def load_mesh_vars(step):
+    if uw.rank() == 0:
+        print("Loading Mesh.....")
+    # mh =
+    mesh.load(outputDir + "/mesh.00000.h5")
+
+    velocityField.load(outputDir + "velocity-" + str(step).zfill(5) + ".h5")
+    pressureField.load(outputDir + "pressure-" + str(step).zfill(5) + ".h5")
+    if uw.rank() == 0:
+        print("Loading Mesh......Done!")
+    # return mesh.save(outputDir + "mesh.00000.h5")
+
+
 # isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
 # tcord[isSubductingPlate]
-# time
-# velsp = []
-# velt = []
-# for i in np.arange(0, time[-1][0], 50):
-#     stStr = str(int(i)).zfill(5)
-#     tracerSwarm = uw.swarm.Swarm(mesh=mesh)
-#     tincord = tracerSwarm.add_variable(dataType="double", count=2)
-#     tracerSwarm.load(outputDir + "tswarm-" + stStr + ".h5")
-#     tincord.load(outputDir + "tcoords-" + stStr + ".h5")
-#     ic = tincord.data
-#     tcord = tracerSwarm.data
-#     velocityField.load(outputDir + "velocity-" + stStr + ".h5")
-#     # isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 0.725)
-#     # isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 0.99) & (ic[:, 0] < 1.00))
-#     # tr = tcord[isNearTrench]
-#     isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.99) & (ic[:, 0] < 2.01))
-#     isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
-#     # Mask For The Trench
-#     sp = np.copy(tcord[isSubductingPlate])
-#     tr = np.copy(tcord[isNearTrench])
-#     print(tr)
-#     velt.append(velocityField.evaluate(tr))
-#     velsp.append(velocityField.evaluate(sp))
-# # vel.shape
+time
+velsp = []
+velt = []
+velop = []
+for i in np.arange(0, time[-1][0], 50):
+    stStr = str(int(i)).zfill(5)
+    # tracerSwarm = uw.swarm.Swarm(mesh=mesh)
+    # tincord = tracerSwarm.add_variable(dataType="double", count=2)
+    # tracerSwarm.load(outputDir + "tswarm-" + stStr + ".h5")
+    # tincord.load(outputDir + "tcoords-" + stStr + ".h5")
+    # ic = tincord.data
+    # tcord = tracerSwarm.data
+    with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
+        tcord = f["data"][()]
+    with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
+        ic = f["data"][()]
+    velocityField.load(outputDir + "velocity-" + stStr + ".h5")
+    # isNearTrench = (ic[:, 1] == 0) & (ic[:, 0] == 0.725)
+    # isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 0.99) & (ic[:, 0] < 1.00))
+    # tr = tcord[isNearTrench]
+    isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.99) & (ic[:, 0] < 2.01))
+    isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
+    # Mask For The Trench
+    sp = np.copy(tcord[isSubductingPlate])
+    tr = np.copy(tcord[isNearTrench])
+    # print(tr)
+    velt.append(velocityField.evaluate(tr))
+    velsp.append(velocityField.evaluate(sp))
+# vel.shape
 # velsp.shape
-# velt = np.array(velt)
-# velsp = np.array(velsp)
-# x = np.arange(0, time[-1][0], 50)
-# time[-1]
-# ndT = []
-# for i in np.arange(0, time[-1][0], 50):
-#     ndT.append(time[time[:, 0] == i, 1])
-# ndT = np.array(ndT)
-#
-# plt.plot(
-#     dm(ndT[1:], u.megayear), dm(-velt[61:, 1, 0], u.centimeter / u.year), label="vTM"
-# )
-# plt.plot(
-#     dm(ndT[1:], u.megayear), -dm(velsp[61:, 2, 0], u.centimeter / u.year), label="vSM-"
-# )
-# plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t$")
-# plt.plot(dm(time[1:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_s$")
-# plt.legend()
+velt = np.array(velt)
+velsp = np.array(velsp)
+x = np.arange(0, time[-1][0], 50)
+time[-1]
+ndT = []
+for i in np.arange(0, time[-1][0], 50):
+    ndT.append(time[time[:, 0] == i, 1])
+ndT = np.array(ndT)
+# % matplotlib
+plt.plot(
+    dm(ndT[1:], u.megayear), dm(-velt[1:, 1, 0], u.centimeter / u.year), label="vTM2"
+)
+plt.plot(
+    dm(ndT[1:], u.megayear), dm(velsp[1:, 2, 0], u.centimeter / u.year), label="vSM-2"
+)
+plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t$2")
+plt.plot(dm(time[1:, 1], u.megayear), dm(vsp, u.centimeter / u.year), label="$V_s$2")
+plt.legend()
 
 plt.xlabel("Time in megayear")
 plt.ylabel("$Vx_{t}$ and $Vx_{sp}$ in centimeters/year")
