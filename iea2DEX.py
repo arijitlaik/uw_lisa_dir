@@ -576,7 +576,7 @@ overRidingShapes = make_overRidingPlate2d(
     topY=nd(0.0 * u.kilometer),
     length=-nd((2.0 - 0.25) * modelHeight),
     taper=90,
-    dip=21,
+    dip=17,
     thicknessArray=[nd(40.0 * u.kilometer), nd(80.0 * u.kilometer)],
 )
 
@@ -1028,14 +1028,16 @@ if restartFlag is False:
 #     figPressure.save()
 
 viscStress = 2.0 * viscosityMapFn * strainRate
-# figStress = glucifer.Figure(store, name="Stress", figsize=figSize,quality=3)
-# figStress.append(glucifer.objects.Points(
-#     swarm, 2.0*viscosityMapFn*strainRate_2ndInvariant, pointSize=2, logScale=True))
-# figStressXX = glucifer.Figure(
-#     store, name="Stress_XX", figsize=figSize, quality=3)
-# figStressXX.append(glucifer.objects.Points(
-#     swarm, viscStress[0], pointsize=2, colours='spectral'))
-# figStress.save()
+figStress = glucifer.Figure(store, name="Stress", figsize=figSize, quality=3)
+figStress.append(
+    glucifer.objects.Points(
+        swarm,
+        2.0 * viscosityMapFn * strainRate_2ndInvariant,
+        pointSize=2,
+        logScale=True,
+    )
+)
+
 
 top = mesh.specialSets["MaxJ_VertexSet"]
 surfaceArea = uw.utils.Integral(
@@ -1083,7 +1085,7 @@ def output_figures(step):
     figStrainRate.save(outputDir + "strainRate" + str(step).zfill(5))
     figDensity.save_image(outputDir + "density" + str(step).zfill(5))
     # figViscosity.save_image(outputDir + "viscosity" + str(step).zfill(5))
-    # # figStress.save(outputDir + "stress" + str(step).zfill(4))
+    figStress.save(outputDir + "stress" + str(step).zfill(5))
     # figStressXX.save(outputDir + "Stress_XX" + str(step).zfill(4))
     # # figPressure.save(outputDir + "pressure" + str(step).zfill(4))
     #
@@ -1244,7 +1246,8 @@ while step < maxSteps:
 
     if uw.rank() == 0:
         print("Stokes Solver Started...")
-    ntol = 1e-5 if step == 0 else 1e-3
+    # ntol = 1e-5 if step == 0 else 1e-3
+    ntol = 1e-2
     solver.solve(
         nonLinearIterate=True,
         nonLinearTolerance=ntol,
