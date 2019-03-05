@@ -132,7 +132,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 vRes = 64
 if enableSA:
-    vRes = 64 + 8
+    vRes = 64 + 2 * 64 * stickyAirtHeight / modelHeight
 vRes
 resMult = 4  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
@@ -152,7 +152,8 @@ refineVert = True
 refInt = [1 / (resMult * 1e2), 1 / (resMult * 2e2)]
 refRange = [0.6, -0.125]
 if enableSA:
-    refRange[1] = refRange[1] - stickyAirtHeight / modelHeight
+    refRange[1] = refRange[1] - (stickyAirtHeight / modelHeight).magnitude
+
 refARx = [0.75, 0.25]
 time = nd(sTime * u.megayear)
 dt = 0.0
