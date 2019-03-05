@@ -132,9 +132,9 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 vRes = 64
 if enableSA:
-    vRes = 64 + 16
+    vRes = 64 + 64*stickyAirtHeight / modelHeight
 
-resMult = 2  # 64 being the base vRes
+resMult = 4  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 if enableSA:
     aRatioMesh = 1.6

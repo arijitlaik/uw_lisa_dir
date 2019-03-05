@@ -581,7 +581,7 @@ overRidingShapes = make_overRidingPlate2d(
 )
 
 # define the viscosity Range
-viscRange = [0.1, 1e5]
+viscRange = [1.0, 1e5]
 
 
 def viscosity_limit(viscosityFn, viscosityRange=viscRange):
@@ -597,7 +597,7 @@ strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
 def yield_visc(cohesion, viscosity):
     eII = strainRate_2ndInvariant
     etaVp = fn.exception.SafeMaths(
-        fn.misc.min(cohesion / (2.0 * (eII + nd(1e-15 / u.second))), viscosity)
+        fn.misc.min(cohesion / (2.0 * (eII + nd(1e-18 / u.second))), viscosity)
     )
     return viscosity_limit(etaVp)
 
