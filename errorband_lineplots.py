@@ -37,7 +37,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 
 dataCols = ["time", "velocity", "location", "exp"]
 df = pd.DataFrame(columns=dataCols)
-setPostFix = ["00_a"]
+setPostFix = ["4x12_8-00175_DrhoLM00_a_indNB", "4x12_8-00175_DrhoLM00_a"]
 opD = "./SET_e_TracerPorcessed/"
 for i in setPostFix:
     #
@@ -48,14 +48,14 @@ for i in setPostFix:
     trDx = trC[0:-1] - trC[1:]
     spDx = spC[1:] - spC[0:-1]
     # opBaDx = opBaC[0:-1] - opBaC[1:]
-    dt = time[1:, 1] - time[0:-1, 1]
+    # dt = time[1:, 1] - time[0:-1, 1]
     # vt = trDx / dt
     # vsp = spDx / dt
     t = dm(time[0:, 1], u.megayear)
     vt = np.load(opD + i + "vt.npy")
     vsp = np.load(opD + i + "vsp.npy")
-    vt = dm(vt, u.centimeter / u.year)
-    vsp = -dm(vsp, u.centimeter / u.year)
+    vt = -dm(vt, u.centimeter / u.year)
+    vsp = dm(vsp, u.centimeter / u.year)
     _dft = pd.DataFrame(dict(time=t, velocity=vt, location="Trench", exp="e0" + i))
     _dfs = pd.DataFrame(
         dict(time=t, velocity=vsp, location="SubductingPlate", exp="e0" + i)

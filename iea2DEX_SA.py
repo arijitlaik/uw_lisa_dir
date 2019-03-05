@@ -791,8 +791,8 @@ if enableSA:
     air = {
         "name": "Air",
         "shape": airShape[0],
-        "viscosity": 0.1 * refViscosity,
-        "density": 0.1 * u.kilogram / u.meter ** 3,
+        "viscosity": 0.01 * refViscosity,
+        "density": 10.0 * u.kilogram / u.meter ** 3,
     }
     modelMaterials.insert(0, air)
 

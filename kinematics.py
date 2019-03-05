@@ -63,14 +63,13 @@ CFL = 1.0  # 0.1*refInt[1]*yRes
 
 # **READ/PARSE LOGS** #
 # =================== #
-setPostFix = "00_a"
+setPostFix = "4x12_8-00175_DrhoLM00_a"
 outputDirName = "./" + setPostFix
 # outputDirName = "sftp://alaik@lisa.surfsara.nl/home/alaik/uw/4x12_8-00175_DrhoLM00"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 
 time = np.genfromtxt(outputDir + "tcheckpoint.log", delimiter=",")
 # time = np.insert(time, 0, [0.0, 0.0], axis=0)
-time
 trC = np.zeros_like(time[:, 0])
 spC = np.zeros_like(time[:, 0])
 opBaC = np.zeros_like(time[:, 0])
