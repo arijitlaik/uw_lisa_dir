@@ -1,9 +1,6 @@
 """
-Timeseries plot with error bands
+Timeseries plot
 ================================
-
-_thumb: .48, .45
-
 """
 import seaborn as sns
 import numpy as np
@@ -40,29 +37,36 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 
 dataCols = ["time", "velocity", "location", "exp"]
 df = pd.DataFrame(columns=dataCols)
-setPostFix = ["00", "30", "50"]
-opD = "SET_e_TracerPorcessed/"
+setPostFix = ["00_a"]
+opD = "./SET_e_TracerPorcessed/"
 for i in setPostFix:
-
+    #
     time = np.load(opD + i + "time.npy")
-    trC = np.load(opD + i + "trC.npy")
-    spC = np.load(opD + i + "spC.npy")
+    trC = np.load(opD + i + "trc.npy")
+    spC = np.load(opD + i + "spc.npy")
 
     trDx = trC[0:-1] - trC[1:]
     spDx = spC[1:] - spC[0:-1]
     # opBaDx = opBaC[0:-1] - opBaC[1:]
     dt = time[1:, 1] - time[0:-1, 1]
-    vt = trDx / dt
-    vsp = spDx / dt
-    t = dm(time[1:, 1], u.megayear)
+    # vt = trDx / dt
+    # vsp = spDx / dt
+    t = dm(time[0:, 1], u.megayear)
+    vt = np.load(opD + i + "vt.npy")
+    vsp = np.load(opD + i + "vsp.npy")
     vt = dm(vt, u.centimeter / u.year)
-    vsp = dm(vsp, u.centimeter / u.year)
-    _dft = pd.DataFrame(dict(time=t, velocity=vt, location="Trench", exp="e" + i))
+    vsp = -dm(vsp, u.centimeter / u.year)
+    _dft = pd.DataFrame(dict(time=t, velocity=vt, location="Trench", exp="e0" + i))
     _dfs = pd.DataFrame(
-        dict(time=t, velocity=vsp, location="SubductingPlate", exp="e" + i)
+        dict(time=t, velocity=vsp, location="SubductingPlate", exp="e0" + i)
     )
     df = df.append(_dft)
     df = df.append(_dfs)
 # %matplotlib
 sns.set_style("darkgrid")
-sns.lineplot(x="time", y="velocity", style="exp", hue="location", data=df)
+
+ax = sns.lineplot(x="time", y="velocity", style="location", hue="exp", data=df)
+ax.set_xticks(np.arange(0, 230, 25))
+ax.set_yticks(np.arange(-1.5, 4, 0.5))
+
+ax.set_xlim(0, 200)

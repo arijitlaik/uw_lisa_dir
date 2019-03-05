@@ -63,14 +63,14 @@ CFL = 1.0  # 0.1*refInt[1]*yRes
 
 # **READ/PARSE LOGS** #
 # =================== #
-setPostFix = "50"
-outputDirName = "/Volumes/GoogleDrive/My Drive/EXPSET-e/" + setPostFix
+setPostFix = "00_a"
+outputDirName = "./" + setPostFix
 # outputDirName = "sftp://alaik@lisa.surfsara.nl/home/alaik/uw/4x12_8-00175_DrhoLM00"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 
 time = np.genfromtxt(outputDir + "tcheckpoint.log", delimiter=",")
-time = np.insert(time, 0, [0.0, 0.0], axis=0)
-
+# time = np.insert(time, 0, [0.0, 0.0], axis=0)
+time
 trC = np.zeros_like(time[:, 0])
 spC = np.zeros_like(time[:, 0])
 opBaC = np.zeros_like(time[:, 0])
@@ -104,10 +104,9 @@ for index, step in enumerate(time[:, 0]):
 
     _vsp = np.copy(tvel[isSubductingPlate])
     _vt = np.copy(tvel[isNearTrench])
-    _vt
     vs[index] = np.average(_vsp[:, 0])
     vtr[index] = np.average(_vt[:, 0])
-    vtr
+
     # Averaging The X's
     spC[index] = np.average(sp[:, 0])
     opBaC[index] = np.average(opBA[:, 0])
@@ -115,11 +114,15 @@ for index, step in enumerate(time[:, 0]):
     trC[index] = np.average(tr[:, 0])
 
 vtr[0] = 0
-# opD = "SET_e_TracerPorcessed/"
-# np.save(opD + setPostFix + "trc", trC)
-# np.save(opD + setPostFix + "spc", spC)
-# np.save(opD + setPostFix + "bac", opBaC)
-# np.save(opD + setPostFix + "fac", opFaC)
+vs[0] = 0
+opD = "SET_e_TracerPorcessed/"
+np.save(opD + setPostFix + "time", time)
+np.save(opD + setPostFix + "vt", vtr)
+np.save(opD + setPostFix + "vsp", vs)
+np.save(opD + setPostFix + "trc", trC)
+np.save(opD + setPostFix + "spc", spC)
+np.save(opD + setPostFix + "bac", opBaC)
+np.save(opD + setPostFix + "fac", opFaC)
 # # %matplotlib
 plt.style.use("seaborn")
 # plt.figure()
