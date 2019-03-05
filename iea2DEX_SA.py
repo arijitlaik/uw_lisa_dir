@@ -708,7 +708,7 @@ modelMaterials = [
         # "eta0":yield_visc(nd(06.*u.megapascal), nd(1e2*refViscosity)),  # 1e2
         # "eta1":yield_visc(nd(30.*u.megapascal), nd(5e1*refViscosity)),  # 5e1
         # "etaChangeDepth":150.*u.kilometer,
-        "viscosity": 1e2 * refViscosity,
+        "viscosity": 1e3 * refViscosity,
         "cohesion": 06.0 * u.megapascal,
         "density": 2800.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
@@ -719,9 +719,9 @@ modelMaterials = [
     {
         "name": "Lower Crust Indian Indentor",
         "shape": indentorshapes[1],
-        "viscosity": 1e2 * refViscosity,
+        "viscosity": 1e3 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "density": 3280.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -732,7 +732,7 @@ modelMaterials = [
         "shape": indentorshapes[2],
         "viscosity": 1e5 * refViscosity,
         "cohesion": 400.0 * u.megapascal,
-        "density": 3200.0 * u.kilogram / u.meter ** 3,
+        "density": 3280.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":3200.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -743,7 +743,7 @@ modelMaterials = [
         "shape": indentorshapes[3],
         "viscosity": 5e4 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
-        "density": 3220.0 * u.kilogram / u.meter ** 3
+        "density": 3280.0 * u.kilogram / u.meter ** 3
         # "density":"deptDependent",
         # "rho0":3220.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -754,7 +754,7 @@ modelMaterials = [
         "name": "Crust Eurasian Plate ForeArc",
         "shape": overRidingShapesForeArc[0],
         "viscosity": 1e3 * refViscosity,
-        "density": 3200.0 * u.kilogram / u.meter ** 3,
+        "density": 3280.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate ForeArc",
