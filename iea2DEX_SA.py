@@ -754,7 +754,7 @@ modelMaterials = [
         "name": "Crust Eurasian Plate ForeArc",
         "shape": overRidingShapesForeArc[0],
         "viscosity": 1e3 * refViscosity,
-        "density": 3280.0 * u.kilogram / u.meter ** 3,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate ForeArc",
