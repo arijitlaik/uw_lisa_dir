@@ -602,6 +602,14 @@ def yield_visc(cohesion, viscosity):
     return viscosity_limit(etaVp)
 
 
+def power_visc(n):
+    return viscosity_limit(
+        np.power(strainRate_2ndInvariant / defaultSRInv, ((1.0 - n) / n)),
+        # (A ** (-1 / n)) * (strainRate_2ndInvariant + defaultSRInv) ** ((1.0 - n) / n),
+        [0.1, 1.0],
+    )
+
+
 # depthViscosityfn = fn.branching.conditional([(fn.coord()[1] > nd(-660.*u.kilometer), 1.), (True, 1e2)])
 def depthViscosityfn(viscosity0, viscosity1, depth, coordtype=None):
     if isinstance(viscosity0, u.Quantity):
@@ -623,7 +631,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": refViscosity,
+        "eta0": power_visc(3.5),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -768,11 +776,11 @@ class QuanityEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-if uw.rank() == 0:
-    with open(outputDir + "/ModelMaterials.json", "w") as outfile:
-        json.dump(modelMaterials, outfile, indent=1, sort_keys=True, cls=QuanityEncoder)
-    with open(outputDir + "/ModelMaterials.pkl", "wb") as outfile:
-        pickle.dump(modelMaterials, outfile)
+# if uw.rank() == 0:
+#     with open(outputDir + "/ModelMaterials.json", "w") as outfile:
+#         json.dump(modelMaterials, outfile, indent=1, sort_keys=True, cls=QuanityEncoder)
+#     with open(outputDir + "/ModelMaterials.pkl", "wb") as outfile:
+#         pickle.dump(modelMaterials, outfile)
 
 
 # figSize = (1800, 700)  # Chota ;)
