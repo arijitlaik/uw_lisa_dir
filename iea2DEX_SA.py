@@ -132,7 +132,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 vRes = 64
 if enableSA:
-    vRes = 64 + 16
+    vRes = 64 + 8
 vRes
 resMult = 4  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
