@@ -54,25 +54,32 @@ for n, i in enumerate(setPostFix):
     dt = time[1:, 1] - time[0:-1, 1]
     vt = trDx / dt
     vsp = spDx / dt
-    t = dm(time[1:, 1], u.megayear)
+    t = time[1:, 1]
+    # t = dm(time[1:, 1], u.megayear)
     # vt = np.load(opD + setPrefix[n] + i + "vt.npy")
     # vsp = np.load(opD + setPrefix[n] + i + "vsp.npy")
-    vt = dm(vt, u.centimeter / u.year)
-    vsp = dm(vsp, u.centimeter / u.year)
+    # vt = dm(vt, u.centimeter / u.year)
+    # vsp = dm(vsp, u.centimeter / u.year)
     vc = vsp - vt
     _dft = pd.DataFrame(dict(time=t, velocity=vt, Type="Trench", Exp="e0" + i))
     _dfs = pd.DataFrame(
         dict(time=t, velocity=vsp, Type="SubductingPlate", Exp="e0" + i)
     )
-    _dfs = pd.DataFrame(dict(time=t, velocity=vc, Type="Convergence", Exp="e0" + i))
+    _dfc = pd.DataFrame(dict(time=t, velocity=vc, Type="Convergence", Exp="e0" + i))
     df = df.append(_dft)
     df = df.append(_dfs)
+    df = df.append(_dfc)
 # %matplotlibpalette="PuBuGn"
 sns.set_style("ticks")
 dfc = df[df["Type"] == "Convergence"]
-sns.set_context("poster")
+sns.set_context("paper")
+palette = sns.color_palette("mako_r", 6)
 # %matplotlib
-ax = sns.lineplot(x="time", y="velocity", style="Type", hue="Exp", data=dfc)
+
+ax = sns.lineplot(x="time", y="velocity", hue="Type", data=df)
+
+# , style="Type", hue="Exp", data=df, palette=palette
+
 sns.despine(trim=True)
 ax.set_xticks(np.arange(0, 225, 25))
 df.to_csv("df.csv")

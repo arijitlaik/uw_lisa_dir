@@ -1139,6 +1139,7 @@ def model_update():
     if uw.rank() == 0:
         print("Advecting Particles...")
 
+    CFL = 1e-2 if step < 100 else 1
     dt *= CFL
     advector.integrate(dt)
     traceradv.integrate(dt)
