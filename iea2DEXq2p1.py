@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "tea2_NU_SA"
+outputDirName = "tea2_NU_q2"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
     if not os.path.exists(outputDir):
@@ -97,11 +97,9 @@ uw.barrier()
 #
 # Scaling and Units
 #
-enableSA = True
+
 # Dimentional Parameters
 modelHeight = 2880.0 * u.kilometer
-if enableSA:
-    stickyAirtHeight = modelHeight / 16.0
 # plateHeight = 120. * u.kilometer
 refDensity = 3200.0 * u.kilogram / u.meter ** 3
 deltaRhoMax = 80.0 * u.kilogram / u.meter ** 3
@@ -130,19 +128,11 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 # Res and Timing
 #
-vRes = 64
-if enableSA:
-    vRes = 64 + 2 * 64 * stickyAirtHeight / modelHeight
-vRes
-resMult = 2  # 64 being the base vRes
-aRatioMesh = 2  # xRes/yRes
-if enableSA:
-    aRatioMesh = 1.6
-aRatioCoor = 4  # Model len ratio
-# if enableSA:
-#     aRatioCoor = modelHeight * 4 / (modelHeight + stickyAirtHeight)
-#     aRatioCoor = aRatioCoor.magnitude
 
+vRes = 64
+resMult = 3  # 64 being the base vRes
+aRatioMesh = 2  # xRes/yRes
+aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
 xRes = int(vRes * aRatioMesh * resMult)
 refineHoriz = True
@@ -151,9 +141,6 @@ refineVert = True
 # refineVert = False
 refInt = [1 / (resMult * 1e2), 1 / (resMult * 2e2)]
 refRange = [0.6, -0.125]
-if enableSA:
-    refRange[1] = refRange[1] - (stickyAirtHeight / modelHeight).magnitude
-
 refARx = [0.75, 0.25]
 time = nd(sTime * u.megayear)
 dt = 0.0
@@ -178,15 +165,12 @@ if uw.rank() == 0:
 # solver_solution_exist.value
 
 mesh = uw.mesh.FeMesh_Cartesian(
-    elementType=("Q1/dQ0"),
+    elementType=("Q2/dPc1"),
     elementRes=(xRes, yRes),
     # minCoord=(nd(0.*u.kilometer), nd(-modelHeight+192.*u.kilometer)),
     minCoord=(nd(0.0 * u.kilometer), nd(-modelHeight)),
     # maxCoord=(nd(9600.*u.kilometer), nd(192.*u.kilometer)),
-    maxCoord=(
-        aRatioCoor * nd(modelHeight),
-        nd(0.0 * u.kilometer + stickyAirtHeight) if enableSA else nd(0.0 * u.kilometer),
-    ),
+    maxCoord=(aRatioCoor * nd(modelHeight), nd(0.0 * u.kilometer)),
     periodic=[False, False],
 )
 
@@ -273,13 +257,12 @@ if restartFlag is False:
     # setupStore.step = 1
     # figMesh.save()
     figMesh.save(outputDir + "/MesHRef.png")
-    yR
+
     if uw.rank() == 0:
         print("Deforming Mesh......Done!")
 
 velocityField = mesh.add_variable(nodeDofCount=mesh.dim)
 pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
-
 uw.barrier()  # Just to be safe that all the vars sync
 
 # SO MUCH FOR A MONOLITHIC FILE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! people dont care about good modular code? why should I.
@@ -534,14 +517,6 @@ def make_layer2d(startX, topY, length, thicknessArray):
 #                                  length=nd(9600.*u.kilometer),
 #                                  thicknessArray=[nd(modelHeight)])
 # # thicknessArray=[nd(192.*u.kilometer), nd(modelHeight-192.*u.kilometer)])
-if enableSA:
-    airShape = make_layer2d(
-        startX=0.0,
-        topY=mesh.maxCoord[1],
-        length=nd(modelHeight * aRatioCoor),
-        thicknessArray=[nd(stickyAirtHeight)],
-        # thicknessArray=[nd(660.*u.kilometer), nd(modelHeight-660.*u.kilometer)]
-    )
 mantleShape = make_layer2d(
     startX=0.0,
     topY=0.0,
@@ -605,7 +580,7 @@ overRidingShapes = make_overRidingPlate2d(
 )
 
 # define the viscosity Range
-viscRange = [1.0, 1e5]
+viscRange = [0.1, 1e5]
 
 
 def viscosity_limit(viscosityFn, viscosityRange=viscRange):
@@ -613,7 +588,7 @@ def viscosity_limit(viscosityFn, viscosityRange=viscRange):
 
 
 # the default strain rate Invariant used for the initial visc
-defaultSRInv = nd(1e-18 / u.second)
+defaultSRInv = nd(1e-15 / u.second)
 strainRate = fn.tensor.symmetric(velocityField.fn_gradient)
 strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
 
@@ -621,7 +596,7 @@ strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
 def yield_visc(cohesion, viscosity):
     eII = strainRate_2ndInvariant
     etaVp = fn.exception.SafeMaths(
-        fn.misc.min(cohesion / (2.0 * (eII + defaultSRInv)), viscosity)
+        fn.misc.min(cohesion / (2.0 * (eII + nd(1e-15 / u.second))), viscosity)
     )
     return viscosity_limit(etaVp)
 
@@ -647,6 +622,10 @@ def depthViscosityfn(viscosity0, viscosity1, depth, coordtype=None):
 
 
 modelMaterials = [
+    # {"name": "Air",
+    #  "shape": mantleandAirShape[0],
+    #  "viscosity":0.1*refViscosity,
+    #  "density":0.*u.kilogram / u.meter**3},
     {
         "name": "Mantle",
         "shape": mantleShape[0],
@@ -708,7 +687,7 @@ modelMaterials = [
         # "eta0":yield_visc(nd(06.*u.megapascal), nd(1e2*refViscosity)),  # 1e2
         # "eta1":yield_visc(nd(30.*u.megapascal), nd(5e1*refViscosity)),  # 5e1
         # "etaChangeDepth":150.*u.kilometer,
-        "viscosity": 1e3 * refViscosity,
+        "viscosity": 1e2 * refViscosity,
         "cohesion": 06.0 * u.megapascal,
         "density": 2800.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
@@ -719,9 +698,9 @@ modelMaterials = [
     {
         "name": "Lower Crust Indian Indentor",
         "shape": indentorshapes[1],
-        "viscosity": 1e3 * refViscosity,
+        "viscosity": 1e2 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
-        "density": 3280.0 * u.kilogram / u.meter ** 3,
+        "density": 2800.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -732,7 +711,7 @@ modelMaterials = [
         "shape": indentorshapes[2],
         "viscosity": 1e5 * refViscosity,
         "cohesion": 400.0 * u.megapascal,
-        "density": 3280.0 * u.kilogram / u.meter ** 3,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":3200.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -743,7 +722,7 @@ modelMaterials = [
         "shape": indentorshapes[3],
         "viscosity": 5e4 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
-        "density": 3280.0 * u.kilogram / u.meter ** 3
+        "density": 3220.0 * u.kilogram / u.meter ** 3
         # "density":"deptDependent",
         # "rho0":3220.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -787,14 +766,6 @@ modelMaterials = [
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
 ]
-if enableSA:
-    air = {
-        "name": "Air",
-        "shape": airShape[0],
-        "viscosity": 0.01 * refViscosity,
-        "density": 10.0 * u.kilogram / u.meter ** 3,
-    }
-    modelMaterials.insert(0, air)
 
 
 class QuanityEncoder(json.JSONEncoder):
@@ -970,7 +941,7 @@ if restartFlag is False:
 stokes = uw.systems.Stokes(
     velocityField=velocityField,
     pressureField=pressureField,
-    voronoi_swarm=swarm,
+    # voronoi_swarm=swarm,
     conditions=[freeslipBC],
     fn_viscosity=viscosityMapFn,
     fn_bodyforce=buoyancyFn,
@@ -1139,7 +1110,6 @@ def model_update():
     if uw.rank() == 0:
         print("Advecting Particles...")
 
-    CFL = 1e-2 if step < 500 else 1
     dt *= CFL
     advector.integrate(dt)
     traceradv.integrate(dt)
@@ -1239,7 +1209,7 @@ uw.barrier()
 # f.save(outputDir + "/TracerInit")
 fieldDict = {
     "velocity": velocityField,
-    "pressure": pressureField,
+    # "pressure": pressureField,
     "meshViscosity": projVisc,
 }
 
@@ -1288,7 +1258,7 @@ while step < maxSteps:
     time, step, dt = model_update()
     dmTime = dm(time, 1.0 * u.megayear).magnitude
 
-    if step % imSteps == 0 or step == maxSteps - 1:
+    if step % imSteps == 1 or step == maxSteps - 1:
         output_figures(step)
 
     if uw.rank() == 0:

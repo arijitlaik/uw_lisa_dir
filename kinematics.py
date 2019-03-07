@@ -63,12 +63,15 @@ CFL = 1.0  # 0.1*refInt[1]*yRes
 
 # **READ/PARSE LOGS** #
 # =================== #
-setPostFix = "4x12_8-00175_hiSpEta"
+setPostFix = "LRINDNB"
 outputDirName = "./" + setPostFix
 # outputDirName = "sftp://alaik@lisa.surfsara.nl/home/alaik/uw/4x12_8-00175_DrhoLM00"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 
-time = np.genfromtxt(outputDir + "tRcheckpoint.log", delimiter=",")
+time = np.genfromtxt(outputDir + "tcheckpoint.log", delimiter=",")
+
+time[0:285]
+
 # time = np.insert(time, 0, [0.0, 0.0], axis=0)
 trC = np.zeros_like(time[:, 0])
 spC = np.zeros_like(time[:, 0])
@@ -83,8 +86,8 @@ for index, step in enumerate(time[:, 0]):
     # Tracer Coordinated from Tracer Swarm
     with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
         tcord = f["data"][()]
-    # with h5py.File(outputDir + "tvel-" + stStr + ".h5", "r") as f:
-    #     tvel = f["data"][()]
+    with h5py.File(outputDir + "tvel-" + stStr + ".h5", "r") as f:
+        tvel = f["data"][()]
     # Initial Tracer Coordinated from Tracer Coords Swarm Variable
     with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
         ic = f["data"][()]
@@ -101,10 +104,10 @@ for index, step in enumerate(time[:, 0]):
     opBA = np.copy(tcord[isOverRidingPlateBA])
     opFA = np.copy(tcord[isOverRidingPlateFA])
 
-    # _vsp = np.copy(tvel[isSubductingPlate])
-    # _vt = np.copy(tvel[isNearTrench])
-    # vs[index] = np.average(_vsp[:, 0])
-    # vtr[index] = np.average(_vt[:, 0])
+    _vsp = np.copy(tvel[isSubductingPlate])
+    _vt = np.copy(tvel[isNearTrench])
+    vs[index] = np.average(_vsp[:, 0])
+    vtr[index] = np.average(_vt[:, 0])
 
     # Averaging The X's
     spC[index] = np.average(sp[:, 0])

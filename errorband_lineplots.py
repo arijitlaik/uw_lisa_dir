@@ -38,8 +38,16 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 
 dataCols = ["time", "velocity", "Type", "Exp"]
 df = pd.DataFrame(columns=dataCols)
-setPostFix = ["50", "30", "00", "00_a_indNB", "00_a", "hiSpEta"]
-setPrefix = ["", "", "", "4x12_8-00175_DrhoLM", "4x12_8-00175_DrhoLM", "4x12_8-00175_"]
+setPostFix = ["50", "30", "00", "00_a_indNB", "00_a", "hiSpEta", "LRINDNB"]
+setPrefix = [
+    "",
+    "",
+    "",
+    "4x12_8-00175_DrhoLM",
+    "4x12_8-00175_DrhoLM",
+    "4x12_8-00175_",
+    "",
+]
 opD = "./SET_e_TracerPorcessed/"
 for n, i in enumerate(setPostFix):
 
@@ -69,14 +77,18 @@ for n, i in enumerate(setPostFix):
     df = df.append(_dft)
     df = df.append(_dfs)
     df = df.append(_dfc)
-# %matplotlibpalette="PuBuGn"
-sns.set_style("ticks")
-dfc = df[df["Type"] == "Convergence"]
-sns.set_context("paper")
+# %matplotlib
+# palette="PuBuGn"
+sns.set_style("whitegrid", {"grid.linestyle": "--"})
+
+dfc = df[
+    (df["Exp"] == "e000_a_indNB") | (df["Exp"] == "e000") | (df["Exp"] == "e0LRINDNB")
+]
+sns.set_context("poster")
 palette = sns.color_palette("mako_r", 6)
 # %matplotlib
 
-ax = sns.lineplot(x="time", y="velocity", hue="Type", data=df)
+ax = sns.lineplot(x="time", y="velocity", hue="Exp", style="Type", data=dfc)
 
 # , style="Type", hue="Exp", data=df, palette=palette
 
@@ -86,5 +98,5 @@ df.to_csv("df.csv")
 
 # ax.set_yticks(np.arange(-1.5, 4, 0.5))
 ax.grid()
-ax.set_xlim(0, 200)
+ax.set_xlim(0, 20000)
 ax.legend()
