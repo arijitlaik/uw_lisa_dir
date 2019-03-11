@@ -38,23 +38,15 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 
 dataCols = ["time", "velocity", "Type", "Exp"]
 df = pd.DataFrame(columns=dataCols)
-setPostFix = ["50", "30", "00", "00_a_indNB", "00_a", "hiSpEta", "LRINDNB"]
-setPrefix = [
-    "",
-    "",
-    "",
-    "4x12_8-00175_DrhoLM",
-    "4x12_8-00175_DrhoLM",
-    "4x12_8-00175_",
-    "",
-]
-opD = "./SET_e_TracerPorcessed/"
-for n, i in enumerate(setPostFix):
+setPostFix = ["00", "00_a_indNB", "30", "30_hiSpEta", "50"]
+# setPostFix = ["50", "30", "00", "00_a_indNB", "00_a", "hiSpEta", "LRINDNB"]
+opD = "./tracerPP/"
+for i in setPostFix:
 
     #
-    time = np.load(opD + setPrefix[n] + i + "time.npy")
-    trC = np.load(opD + setPrefix[n] + i + "trc.npy")
-    spC = np.load(opD + setPrefix[n] + i + "spc.npy")
+    time = np.load(opD + i + "time.npy")
+    trC = np.load(opD + i + "trc.npy")
+    spC = np.load(opD + i + "spc.npy")
 
     trDx = trC[0:-1] - trC[1:]
     spDx = spC[1:] - spC[0:-1]
@@ -62,12 +54,12 @@ for n, i in enumerate(setPostFix):
     dt = time[1:, 1] - time[0:-1, 1]
     vt = trDx / dt
     vsp = spDx / dt
-    t = time[1:, 1]
-    # t = dm(time[1:, 1], u.megayear)
+    # t = time[1:, 1]
+    t = dm(time[1:, 1], u.megayear)
     # vt = np.load(opD + setPrefix[n] + i + "vt.npy")
     # vsp = np.load(opD + setPrefix[n] + i + "vsp.npy")
-    # vt = dm(vt, u.centimeter / u.year)
-    # vsp = dm(vsp, u.centimeter / u.year)
+    vt = dm(vt, u.centimeter / u.year)
+    vsp = dm(vsp, u.centimeter / u.year)
     vc = vsp - vt
     _dft = pd.DataFrame(dict(time=t, velocity=vt, Type="Trench", Exp="e0" + i))
     _dfs = pd.DataFrame(
@@ -79,24 +71,45 @@ for n, i in enumerate(setPostFix):
     df = df.append(_dfc)
 # %matplotlib
 # palette="PuBuGn"
-sns.set_style("whitegrid", {"grid.linestyle": "--"})
 
-dfc = df[
-    (df["Exp"] == "e000_a_indNB") | (df["Exp"] == "e000") | (df["Exp"] == "e0LRINDNB")
-]
+dfc = df[(df["Exp"] == "e000") | (df["Exp"] == "e050") | (df["Exp"] == "e030")]
+dfc = dfc[(dfc["Type"] != "Convergence")]
 sns.set_context("poster")
-palette = sns.color_palette("mako_r", 6)
+sns.set_style("whitegrid", {"grid.linestyle": "--", "grid.linewidth": 0.05})
+
+# palette = sns.color_palette("mako_r", 6)
 # %matplotlib
-
+sns.set_palette("Set2")
 ax = sns.lineplot(x="time", y="velocity", hue="Exp", style="Type", data=dfc)
-
-# , style="Type", hue="Exp", data=df, palette=palette
-
-sns.despine(trim=True)
+ax.figure.set_size_inches(12.5, 10)
+ax.set_xlim(0, 200)
+ax.set_ylim(-1.5, 4)
+ax.set_yticks(np.arange(-1.5, 4, 0.5))
 ax.set_xticks(np.arange(0, 225, 25))
+ax.figure.savefig("DrhoTRSP.svg")
 df.to_csv("df.csv")
-
-# ax.set_yticks(np.arange(-1.5, 4, 0.5))
-ax.grid()
-ax.set_xlim(0, 20000)
+# ax.errorbar()
+ax.clear()
+dfc = df[(df["Exp"] == "e000") | (df["Exp"] == "e000_a_indNB")]
+dfc = dfc[(dfc["Type"] != "Convergence")]
+sns.set_palette("Set2")
+ax = sns.lineplot(x="time", y="velocity", hue="Exp", style="Type", data=dfc)
+ax.figure.set_size_inches(12.5, 10)
+ax.set_xlim(0, 200)
+ax.set_ylim(-1.5, 4)
+ax.set_yticks(np.arange(-1.5, 4.5, 0.5))
+ax.set_xticks(np.arange(0, 225, 25))
+# ax.figure.savefig("DINDNBTRSP.svg")
+# ax.grid()
+ax.clear()
+dfc = df[(df["Exp"] == "e000") | (df["Exp"] == "e000_a_indNB")]
+dfc = dfc[(dfc["Type"] != "Convergence")]
+sns.set_palette("Set2")
+ax = sns.lineplot(x="time", y="velocity", hue="Exp", style="Type", data=dfc)
+ax.figure.set_size_inches(10.5, 10)
+ax.set_xlim(0, 150)
+ax.set_ylim(-1.5, 4)
+ax.set_yticks(np.arange(-1.5, 4, 0.5))
+ax.set_xticks(np.arange(0, 225, 25))
+ax.figure.savefig("DINDNBTRSP.svg")
 ax.legend()

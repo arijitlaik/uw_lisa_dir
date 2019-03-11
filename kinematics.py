@@ -62,90 +62,89 @@ dt = 0.0
 CFL = 1.0  # 0.1*refInt[1]*yRes
 
 # **READ/PARSE LOGS** #
+# "00",  00_a_indNB  30  30_hiSpEta  50
 # =================== #
-setPostFix = "LRINDNB"
-outputDirName = "./" + setPostFix
-# outputDirName = "sftp://alaik@lisa.surfsara.nl/home/alaik/uw/4x12_8-00175_DrhoLM00"
-outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
+setPostFixes = ["00", "00_a_indNB", "30", "30_hiSpEta", "50"]
+for setPostFix in setPostFixes:
+    outputDirName = "EXPSET-e/" + setPostFix
+    # outputDirName = "sftp://alaik@lisa.surfsara.nl/home/alaik/uw/4x12_8-00175_DrhoLM00"
+    outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 
-time = np.genfromtxt(outputDir + "tcheckpoint.log", delimiter=",")
+    time = np.genfromtxt(outputDir + "tcheckpoint.log", delimiter=",")
 
-time[0:285]
+    time = np.insert(time, 0, [0.0, 0.0], axis=0)
+    trC = np.zeros_like(time[:, 0])
+    spC = np.zeros_like(time[:, 0])
+    opBaC = np.zeros_like(time[:, 0])
+    opFaC = np.zeros_like(time[:, 0])
+    vtr = np.zeros_like(time[:, 0])
+    vs = np.zeros_like(time[:, 0])
 
-# time = np.insert(time, 0, [0.0, 0.0], axis=0)
-trC = np.zeros_like(time[:, 0])
-spC = np.zeros_like(time[:, 0])
-opBaC = np.zeros_like(time[:, 0])
-opFaC = np.zeros_like(time[:, 0])
-vtr = np.zeros_like(time[:, 0])
-vs = np.zeros_like(time[:, 0])
+    for index, step in enumerate(time[:, 0]):
+        # step = 100
+        stStr = str(int(step)).zfill(5)
+        # Tracer Coordinated from Tracer Swarm
+        with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
+            tcord = f["data"][()]
+        with h5py.File(outputDir + "tvel-" + stStr + ".h5", "r") as f:
+            tvel = f["data"][()]
+        # Initial Tracer Coordinated from Tracer Coords Swarm Variable
+        with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
+            ic = f["data"][()]
 
-for index, step in enumerate(time[:, 0]):
-    # step = 100
-    stStr = str(int(step)).zfill(5)
-    # Tracer Coordinated from Tracer Swarm
-    with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
-        tcord = f["data"][()]
-    with h5py.File(outputDir + "tvel-" + stStr + ".h5", "r") as f:
-        tvel = f["data"][()]
-    # Initial Tracer Coordinated from Tracer Coords Swarm Variable
-    with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
-        ic = f["data"][()]
+        # Masks for Regions
 
-    # Masks for Regions
+        isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.999) & (ic[:, 0] < 2.001))
+        isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
+        isOverRidingPlateBA = (ic[:, 1] == 0) & (ic[:, 0] > 2.499) & (ic[:, 0] < 2.501)
+        isOverRidingPlateFA = (ic[:, 1] == 0) & (ic[:, 0] > 2.049) & (ic[:, 0] < 2.051)
 
-    isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.999) & (ic[:, 0] < 2.001))
-    isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
-    isOverRidingPlateBA = (ic[:, 1] == 0) & (ic[:, 0] > 2.499) & (ic[:, 0] < 2.501)
-    isOverRidingPlateFA = (ic[:, 1] == 0) & (ic[:, 0] > 2.049) & (ic[:, 0] < 2.051)
+        sp = np.copy(tcord[isSubductingPlate])
+        tr = np.copy(tcord[isNearTrench])
+        opBA = np.copy(tcord[isOverRidingPlateBA])
+        opFA = np.copy(tcord[isOverRidingPlateFA])
 
-    sp = np.copy(tcord[isSubductingPlate])
-    tr = np.copy(tcord[isNearTrench])
-    opBA = np.copy(tcord[isOverRidingPlateBA])
-    opFA = np.copy(tcord[isOverRidingPlateFA])
+        _vsp = np.copy(tvel[isSubductingPlate])
+        _vt = np.copy(tvel[isNearTrench])
+        vs[index] = np.average(_vsp[:, 0])
+        vtr[index] = np.average(_vt[:, 0])
 
-    _vsp = np.copy(tvel[isSubductingPlate])
-    _vt = np.copy(tvel[isNearTrench])
-    vs[index] = np.average(_vsp[:, 0])
-    vtr[index] = np.average(_vt[:, 0])
+        # Averaging The X's
+        spC[index] = np.average(sp[:, 0])
+        opBaC[index] = np.average(opBA[:, 0])
+        opFaC[index] = np.average(opFA[:, 0])
+        trC[index] = np.average(tr[:, 0])
 
-    # Averaging The X's
-    spC[index] = np.average(sp[:, 0])
-    opBaC[index] = np.average(opBA[:, 0])
-    opFaC[index] = np.average(opFA[:, 0])
-    trC[index] = np.average(tr[:, 0])
-
-vtr[0] = 0
-vs[0] = 0
-opD = "SET_e_TracerPorcessed/"
-np.save(opD + setPostFix + "time", time)
-np.save(opD + setPostFix + "vt", vtr)
-np.save(opD + setPostFix + "vsp", vs)
-np.save(opD + setPostFix + "trc", trC)
-np.save(opD + setPostFix + "spc", spC)
-np.save(opD + setPostFix + "bac", opBaC)
-np.save(opD + setPostFix + "fac", opFaC)
-# # %matplotlib
+    vtr[0] = 0
+    vs[0] = 0
+    opD = "tracerPP/"
+    np.save(opD + setPostFix + "time", time)
+    np.save(opD + setPostFix + "vt", vtr)
+    np.save(opD + setPostFix + "vsp", vs)
+    np.save(opD + setPostFix + "trc", trC)
+    np.save(opD + setPostFix + "spc", spC)
+    np.save(opD + setPostFix + "bac", opBaC)
+    np.save(opD + setPostFix + "fac", opFaC)
 plt.style.use("seaborn")
 # plt.figure()
 # Calcutae Dx,Dt and V #
-trDx = trC[0:-1] - trC[1:]
-spDx = spC[1:] - spC[0:-1]
-opBaDx = opBaC[0:-1] - opBaC[1:]
-opFaDx = opFaC[0:-1] - opFaC[1:]
-dt = time[1:, 1] - time[0:-1, 1]
-vt = trDx / dt
-vsp = spDx / dt
-vb = opBaDx / dt
-vf = opFaDx / dt
+# trDx = trC[0:-1] - trC[1:]
+# spDx = spC[1:] - spC[0:-1]
+# opBaDx = opBaC[0:-1] - opBaC[1:]
+# opFaDx = opFaC[0:-1] - opFaC[1:]
+# dt = time[1:, 1] - time[0:-1, 1]
+# vt = trDx / dt
+# vsp = spDx / dt
+# vb = opBaDx / dt
+# vf = opFaDx / dt
 # time.shape
-opD = "SET_e_TracerPorcessed/"
-np.save(opD + setPostFix + "trc", trC)
-np.save(opD + setPostFix + "spc", spC)
-np.save(opD + setPostFix + "bac", opBaC)
-np.save(opD + setPostFix + "fac", opFaC)
-np.save(opD + setPostFix + "time", time)
-# %ma tplotlib
+# opD = "SET_e_TracerPorcessed/"
+# np.save(opD + setPostFix + "trc", trC)
+# np.save(opD + setPostFix + "spc", spC)
+# np.save(opD + setPostFix + "bac", opBaC)
+# np.save(opD + setPostFix + "fac", opFaC)
+# np.save(opD + setPostFix + "time", time)
+# # %ma tplotlib
 plt.style.use("seaborn")
 # plt.figure()
 # %matplotlib
