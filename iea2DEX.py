@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "tea2_NU"
+outputDirName = "tea2_NU_TX"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
     if not os.path.exists(outputDir):
@@ -527,10 +527,10 @@ mantleShape = make_layer2d(
 )
 
 slabshapes = make_slab2d(
-    topX=nd(0.725 * modelHeight),
+    topX=nd(0.3 * modelHeight),
     topY=0.0,
-    length=nd(1.275 * modelHeight),
-    taper=15,
+    length=nd(1.7 * modelHeight),
+    taper=12,
     dip=29,
     depth=nd(120.0 * u.kilometer),
     thicknessArray=[
@@ -547,10 +547,10 @@ indentorshapes = make_Indentor2d(
     length=nd(0.85 * modelHeight),
     taper=18,
     thicknessArray=[
-        nd(15.0 * u.kilometer),
-        nd(15.0 * u.kilometer),
+        nd(20.0 * u.kilometer),
+        nd(20.0 * u.kilometer),
         nd(30.0 * u.kilometer),
-        nd(30.0 * u.kilometer),
+        nd(40.0 * u.kilometer),
     ],  # UL
     taper2=12,
 )
@@ -812,7 +812,8 @@ figParticle.Points(
     materialVariable,
     pointsize=1.9,
     discrete=True,
-    colours="paired",
+    # colours="#e6194B #3cb44b  #ffe119 #4363d8 #f58231 #42d4f4 #f032e6 #fabebe #469990 #e6beff #9A6324 #fffac8, #800000 #aaffc3 #000075 #a9a9a9",
+    colours="#e6194B #3cb44b  #ffe119 #4363d8 #f58231 #42d4f4 #f032e6 #fabebe #469990 #e6beff #9A6324 #fffac8 #800000",
     fn_mask=materialVariable > 0,
     valueRange=[1, len(modelMaterials) - 1],
 )
@@ -820,6 +821,7 @@ figParticle.objects[0].colourBar["binlabels"] = True
 figParticle.objects[0].colourBar["size"] = [0.8, 0.02]
 if restartFlag is False:
     figParticle.save(outputDir + "/Particles_Initial")
+exit()
 # figParticle.show()
 
 # WIP! check for the scaling of the exponent
