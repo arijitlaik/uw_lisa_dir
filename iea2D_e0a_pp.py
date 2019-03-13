@@ -3,29 +3,26 @@
 
 # Good Old Imports
 
+import datetime
+import json
+import pickle
+from colorMaps import vlike as vlike
+from colorMaps import coldmorning as coldmorning
+import numpy as np
+import glucifer
+from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
+from underworld.scaling import units as u
+from underworld import function as fn
+import underworld as uw
 import os
 import sys
 
 os.environ["UW_ENABLE_TIMING"] = "1"
-import underworld as uw
-from underworld import function as fn
 
-from underworld.scaling import units as u
-from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
-
-import glucifer
 
 # import colorcet as cc
 
 # import tokyo
-import numpy as np
-
-from colorMaps import coldmorning as coldmorning
-from colorMaps import vlike as vlike
-
-import pickle
-import json
-import datetime
 
 
 #
@@ -33,7 +30,7 @@ import datetime
 #
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
-outputDirName = "4x12_8-00175_DrhoLM00_a"
+outputDirName = "4x12_8-00175_DrhoLM00_a_PP"
 # outputDirName = "tea2"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -177,7 +174,7 @@ mesh = uw.mesh.FeMesh_Cartesian(
 )
 
 bBox = ((mesh.minCoord[0], mesh.minCoord[1]), (mesh.maxCoord[0], mesh.maxCoord[1]))
-figSize = (1600 * 2, int(1600 / aRatioCoor) * 2 + 110)
+figSize = (2400 * 2, int(2400 / aRatioCoor) * 2 + 200)
 # figSize = (1800, 600)
 
 # setupStore = glucifer.Store(outputDir+"/setup")
@@ -757,9 +754,9 @@ if restartFlag is False:
             materialVariable.data[:] = func.evaluate(swarm)
 if restartFlag is True:
     load_swarm_vars(step=rstep)
+store = glucifer.Store(outputDir + "/ieaHR")
+# store = None
 
-# store = glucifer.Store(outputDir+'/ieaHR')
-store = None
 figParticle = glucifer.Figure(
     store, figsize=figSize, name="Materials", boundingBox=bBox
 )
@@ -774,8 +771,29 @@ figParticle.Points(
 )
 figParticle.objects[0].colourBar["binlabels"] = True
 figParticle.objects[0].colourBar["size"] = [0.8, 0.02]
+figLine = glucifer.Figure(store, figsize=figSize, name="600Line", boundingBox=bBox)
+figParticle.draw.line(
+    start=(mesh.minCoord[0], -nd(660.0 * u.kilometer)),
+    end=(mesh.maxCoord[0], -nd(660.0 * u.kilometer)),
+)
+
+# refRange = [0.6, -0.125]
+refARx = np.array(refARx)
+re2 = refRange[0] * refARx
+re2
+refx2 = np.array([2 - re2[0], 2 + re2[1]])
+
+
+figParticle.draw.line(start=(refx2[0], 0), end=(refx2[0], refRange[1]))
+figParticle.draw.line(start=(refx2[1], 0), end=(refx2[1], refRange[1]))
+figParticle.draw.line(start=(refx2[0], refRange[1]), end=(refx2[1], refRange[1]))
+figParticle.draw.line(
+    start=(mesh.minCoord[0], -nd(660.0 * u.kilometer)),
+    end=(mesh.maxCoord[0], -nd(660.0 * u.kilometer)),
+)
 if restartFlag is False:
     figParticle.save(outputDir + "/Particles_Initial")
+
 # figParticle.show()
 
 # WIP! check for the scaling of the exponent
@@ -910,7 +928,8 @@ if uw.nProcs() == 1:
     solver.set_inner_method("lu")
 else:
     solver.set_inner_method("mumps")
-
+print("Dine")
+exit()
 # solver.options.scr.ksp_type = "cg"
 solver.set_penalty(1e5)
 

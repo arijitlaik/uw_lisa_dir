@@ -73,12 +73,7 @@ for setPostFix in setPostFixes:
     time = np.genfromtxt(outputDir + "tcheckpoint.log", delimiter=",")
 
     time = np.insert(time, 0, [0.0, 0.0], axis=0)
-    trC = np.zeros_like(time[:, 0])
-    spC = np.zeros_like(time[:, 0])
-    opBaC = np.zeros_like(time[:, 0])
-    opFaC = np.zeros_like(time[:, 0])
-    vtr = np.zeros_like(time[:, 0])
-    vs = np.zeros_like(time[:, 0])
+    cPc = np.zeros_like(time[:, 0])
 
     for index, step in enumerate(time[:, 0]):
         # step = 100
@@ -86,45 +81,26 @@ for setPostFix in setPostFixes:
         # Tracer Coordinated from Tracer Swarm
         with h5py.File(outputDir + "tswarm-" + stStr + ".h5", "r") as f:
             tcord = f["data"][()]
-        with h5py.File(outputDir + "tvel-" + stStr + ".h5", "r") as f:
-            tvel = f["data"][()]
+        # with h5py.File(outputDir + "tvel-" + stStr + ".h5", "r") as f:
+        #     tvel = f["data"][()]
         # Initial Tracer Coordinated from Tracer Coords Swarm Variable
         with h5py.File(outputDir + "tcoords-" + stStr + ".h5", "r") as f:
             ic = f["data"][()]
 
         # Masks for Regions
 
-        isNearTrench = (ic[:, 1] == 0) & ((ic[:, 0] > 1.999) & (ic[:, 0] < 2.001))
-        isSubductingPlate = (ic[:, 1] == 0) & (ic[:, 0] < 0.701) & (ic[:, 0] > 0.699)
-        isOverRidingPlateBA = (ic[:, 1] == 0) & (ic[:, 0] > 2.499) & (ic[:, 0] < 2.501)
-        isOverRidingPlateFA = (ic[:, 1] == 0) & (ic[:, 0] > 2.049) & (ic[:, 0] < 2.051)
+        isCp = ((ic[:, 1] < -0.0103) & (ic[:, 1] > -0.0105)) & (
+            (ic[:, 0] > 1.049) & (ic[:, 0] < 1.051)
+        )
+        cP = np.copy(tcord[isCp])
+        print(cP.size)
 
-        sp = np.copy(tcord[isSubductingPlate])
-        tr = np.copy(tcord[isNearTrench])
-        opBA = np.copy(tcord[isOverRidingPlateBA])
-        opFA = np.copy(tcord[isOverRidingPlateFA])
+        cPc[index] = np.average(cP[:, 1])
 
-        _vsp = np.copy(tvel[isSubductingPlate])
-        _vt = np.copy(tvel[isNearTrench])
-        vs[index] = np.average(_vsp[:, 0])
-        vtr[index] = np.average(_vt[:, 0])
-
-        # Averaging The X's
-        spC[index] = np.average(sp[:, 0])
-        opBaC[index] = np.average(opBA[:, 0])
-        opFaC[index] = np.average(opFA[:, 0])
-        trC[index] = np.average(tr[:, 0])
-
-    vtr[0] = 0
-    vs[0] = 0
     opD = "tracerPP/"
     np.save(opD + setPostFix + "time", time)
-    np.save(opD + setPostFix + "vt", vtr)
-    np.save(opD + setPostFix + "vsp", vs)
-    np.save(opD + setPostFix + "trc", trC)
-    np.save(opD + setPostFix + "spc", spC)
-    np.save(opD + setPostFix + "bac", opBaC)
-    np.save(opD + setPostFix + "fac", opFaC)
+    np.save(opD + setPostFix + "cdepth", cPc)
+
 plt.style.use("seaborn")
 # plt.figure()
 # Calcutae Dx,Dt and V #
@@ -147,16 +123,16 @@ plt.style.use("seaborn")
 # # %ma tplotlib
 plt.style.use("seaborn")
 # plt.figure()
-# %matplotlib
-plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t0$")
-plt.plot(dm(time[:, 1], u.megayear), -dm(vtr, u.centimeter / u.year), label="$V_tE$")
-
-plt.plot(dm(time[:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_{sp}0$")
-plt.plot(
-    dm(time[1:, 1], u.megayear), dm(vsp - vt, u.centimeter / u.year), label="$V_c0$"
-)
+# # %matplotlib
+# plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t0$")
+# plt.plot(dm(time[:, 1], u.megayear), -dm(vtr, u.centimeter / u.year), label="$V_tE$")
 #
-# plt.plot(dm(time[1:, 1], u.megayear), dm(vb, u.centimeter / u.year), label="$V_ba$")
+# plt.plot(dm(time[:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_{sp}0$")
+# plt.plot(
+#     dm(time[1:, 1], u.megayear), dm(vsp - vt, u.centimeter / u.year), label="$V_c0$"
+# )
+# #
+# # plt.plot(dm(time[1:, 1], u.megayear), dm(vb, u.centimeter / u.year), label="$V_ba$")
 # plt.plot(dm(time[1:, 1], u.megayear), dm(vf, u.centimeter / u.year), label="$V_fa$")
 # plt.plot(
 #     dm(time[1:, 1], u.megayear), dm(vf - vb, u.centimeter / u.year), label="$V_{f-b}$"
