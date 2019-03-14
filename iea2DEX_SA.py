@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "tea2_NU_SA"
+outputDirName = "tea2_NU_SA_F"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
     if not os.path.exists(outputDir):
@@ -551,9 +551,9 @@ mantleShape = make_layer2d(
 )
 
 slabshapes = make_slab2d(
-    topX=nd(0.725 * modelHeight),
+    topX=nd(0.0 * modelHeight),
     topY=0.0,
-    length=nd(1.275 * modelHeight),
+    length=nd(2.0 * modelHeight),
     taper=15,
     dip=29,
     depth=nd(120.0 * u.kilometer),
@@ -651,7 +651,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": power_visc(3.5),
+        "eta0": 1 * refViscosity,
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -791,7 +791,7 @@ if enableSA:
     air = {
         "name": "Air",
         "shape": airShape[0],
-        "viscosity": 0.01 * refViscosity,
+        "viscosity": 0.1 * refViscosity,
         "density": 10.0 * u.kilogram / u.meter ** 3,
     }
     modelMaterials.insert(0, air)
@@ -1139,7 +1139,7 @@ def model_update():
     if uw.rank() == 0:
         print("Advecting Particles...")
 
-    CFL = 1e-2 if step < 500 else 1
+    # CFL = 1e-2 if step < 500 else 1
     dt *= CFL
     advector.integrate(dt)
     traceradv.integrate(dt)
