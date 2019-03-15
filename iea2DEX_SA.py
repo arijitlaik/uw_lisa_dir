@@ -6,7 +6,7 @@
 import os
 import sys
 
-# os.environ["UW_ENABLE_TIMING"] = "1"
+os.environ["UW_ENABLE_TIMING"] = "1"
 import underworld as uw
 from underworld import function as fn
 
@@ -792,7 +792,7 @@ if enableSA:
         "name": "Air",
         "shape": airShape[0],
         "viscosity": 0.1 * refViscosity,
-        "density": 10.0 * u.kilogram / u.meter ** 3,
+        "density": 0.0 * u.kilogram / u.meter ** 3,
     }
     modelMaterials.insert(0, air)
 
@@ -911,7 +911,7 @@ figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-1, 4, 6).toli
 if restartFlag is False:
     figViscosityMesh.save(outputDir + "/ViscosityMesh_Initial_3")
 
-# refDensity = 2500.*u.kilogram / u.meter**3
+refDensity = 0.0 * u.kilogram / u.meter ** 3
 
 
 def depthDensityfn(density0, density1, depth):
