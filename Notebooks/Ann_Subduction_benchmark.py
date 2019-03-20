@@ -12,6 +12,7 @@ from underworld.scaling import units as u
 from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
 import glucifer
 import numpy as np
+import collections
 
 
 #
@@ -63,7 +64,7 @@ uw.mpi.barrier()
 
 
 mesh = uw.mesh.FeMesh_Annulus(
-    elementRes=(128, 512),
+    elementRes=(512, 256),
     radialLengths=(nd(earthRadius - modelHeight + airHeight), nd(earthRadius)),
     angularExtent=((180 - ThetaRAD.magnitude) / 2, 90 + ThetaRAD.magnitude / 2),
     periodic=[False, False],
@@ -96,7 +97,7 @@ fig = glucifer.Figure(store=store, figsize=(1200, 450))
 # fig.append( glucifer.objects.Mesh( mesh ,nodeNumbers=True))
 fig.append(glucifer.objects.Mesh(mesh))
 # fig.append( glucifer.objects.Points( swarm,pointsize=4))
-fig.show()
+fig.save(outputDir + "/mesh")
 
 
 radialFn = fn.math.sqrt(fn.math.dot(fn.coord(), fn.coord()))
@@ -146,7 +147,7 @@ figP.append(
         discrete=True,
     )
 )
-figP.show()
+figP.save(outputDir + "/Par")
 
 
 def checkpoint(
@@ -195,13 +196,12 @@ def checkpoint(
         if not hasattr(checkpoint, "mH"):
             checkpoint.mH = mesh.save(prefix + meshName + ".h5")
         mh = checkpoint.mH
-        uw.mpi.barrier()
+
         for key, value in fieldDict.items():
             filename = prefix + key + "-" + ii
             handle = value.save(filename + ".h5")
             if enable_xdmf:
                 value.xdmf(filename, handle, key, mh, meshName, modeltime=time)
-            uw.mpi.barrier()
 
     # is there a swarm
     if swarm is not None:
@@ -222,10 +222,6 @@ def checkpoint(
             handle = value.save(filename + ".h5")
             if enable_xdmf:
                 value.xdmf(filename, handle, key, sH, swarmName, modeltime=time)
-            uw.mpi.barrier()
-
-
-uw.mpi.barrier()
 
 
 # I = mesh.specialSets["inner"]
@@ -281,7 +277,7 @@ buoyancyFn = -1.0 * densityFn * mesh.unitvec_r_Fn
 figD = glucifer.Figure(store=store, figsize=(1200, 450))
 # fig.append( glucifer.objects.Mesh( mesh))
 figD.append(glucifer.objects.Points(swarm, densityFn, colours="spectral", pointsize=2))
-figD.show()
+figD.save(outputDir + "/Den")
 
 
 airViscosity = 1.0
@@ -314,13 +310,14 @@ figV.append(
 figV.save(outputDir + "/eta" + str(step).zfill(5))
 
 
-fieldDict = {
-    "velocity": velocityField,
-    "pressure": pressureField,
-    "meshViscosity": viscosityFn,
-}
+fieldDict = collections.OrderedDict()
+fieldDict["velocity"] = velocityField
+fieldDict["pressure"] = pressureField
+fieldDict["meshViscosity"] = viscosityFn
 
-swarmDict = {"materials": materialVariable}
+# swarmDict = {"materials": materialVariable}
+swarmDict = collections.OrderedDict()
+swarmDict["materials"] = materialVariable
 # traceDict = {"tcoords": tincord, "tvel": tracerVelocity}
 uw.mpi.barrier()
 
@@ -331,6 +328,7 @@ checkpoint(
     swarmDict,
     index=step,
     modeltime=dm(time, 1.0 * u.megayear).magnitude,
+    prefix=outputDir,
 )
 
 
@@ -449,4 +447,5 @@ while step < maxSteps:
         swarmDict,
         index=step,
         modeltime=dm(time, 1.0 * u.megayear).magnitude,
+        prefix=outputDir,
     )
