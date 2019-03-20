@@ -61,7 +61,7 @@ uw.mpi.barrier()
 
 
 mesh = uw.mesh.FeMesh_Annulus(
-    elementRes=(128, 96),
+    elementRes=(256, 96),
     radialLengths=(nd(earthRadius - modelHeight + airHeight), nd(earthRadius)),
     angularExtent=((180 - ThetaRAD.magnitude) / 2, 90 + ThetaRAD.magnitude / 2),
 )
@@ -302,7 +302,7 @@ fieldDict = {
 
 swarmDict = {"materials": materialVariable}
 # traceDict = {"tcoords": tincord, "tvel": tracerVelocity}
-
+uw.mpi.barrier()
 
 checkpoint(
     mesh,
