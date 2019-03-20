@@ -5,7 +5,6 @@
 import os
 import sys
 
-os.environ["UW_ENABLE_TIMING"] = "1"
 import underworld as uw
 from underworld import function as fn
 from underworld.scaling import units as u
@@ -54,17 +53,26 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 
 step = 0
 time = 0.0
-maxSteps = 400
+maxSteps = 1000
 outputDirName = "AnnSubBenchmark_SA"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.mpi.rank == 0:
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
+try:
+    tflag = os.environ["UW_ENABLE_TIMING"]
+except KeyError:
+    tflag = False
+else:
+    if tflag == "1":
+        tflag = True
+    else:
+        tflag = False
 uw.mpi.barrier()
-
-
+if tflag:
+    uw.timing.start()
 mesh = uw.mesh.FeMesh_Annulus(
-    elementRes=(128, 256),
+    elementRes=(256, 512),
     radialLengths=(nd(earthRadius - modelHeight + airHeight), nd(earthRadius)),
     angularExtent=((180 - ThetaRAD.magnitude) / 2, 90 + ThetaRAD.magnitude / 2),
     periodic=[False, False],
@@ -92,7 +100,10 @@ swarm_popcontrol = uw.swarm.PopulationControl(
 )
 
 
-store = None
+store = glucifer.Store(outputDir + "/gfxstore")
+if store is not None:
+    store.step = 0
+
 fig = glucifer.Figure(store=store, figsize=(1200, 450))
 # fig.append( glucifer.objects.Mesh( mesh ,nodeNumbers=True))
 fig.append(glucifer.objects.Mesh(mesh))
@@ -135,7 +146,7 @@ materialVariable.data[:] = 1
 materialVariable.data[air] = 0
 materialVariable.data[lowermantle] = 2
 materialVariable.data[slab | perturb] = 3
-store = None
+
 figP = glucifer.Figure(store=store, figsize=(1200, 450))
 # fig.append( glucifer.objects.Mesh( mesh))
 figP.append(
@@ -354,6 +365,7 @@ stokesSLE = uw.systems.Stokes(
 
 stokesSolverAN = uw.systems.Solver(stokesSLE)
 
+# stokesSolverAN.set_inner_method = "mumps"
 stokesSolverAN.options.A11.ksp_type = "fgmres"
 stokesSolverAN.options.scr.ksp_rtol = 1.0e-4
 stokesSolverAN.options.scr.ksp_max_it = 100
@@ -450,9 +462,9 @@ while step < maxSteps:
     time += dt
     projVisMesh.solve()
     if step % 5 == 0 or step == 1 or step == 2:
+        store.step = step
         figV.save(outputDir + "/eta" + str(step).zfill(5))
         figVdot.save(outputDir + "/Vdot" + str(step).zfill(5))
-
     if step % 10 == 0 or step == 1 or step == 2:
         checkpoint(
             mesh,
@@ -463,3 +475,8 @@ while step < maxSteps:
             modeltime=dm(time, 1.0 * u.megayear).magnitude,
             prefix=outputDir,
         )
+
+if tflag:
+    uw.timing.print_table(
+        output_file=outputDir + "/uwTimer.log", display_fraction=0.999
+    )
