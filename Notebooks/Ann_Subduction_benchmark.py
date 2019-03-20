@@ -54,7 +54,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 
 step = 0
 time = 0.0
-maxSteps = 100
+maxSteps = 400
 outputDirName = "AnnSubBenchmark_SA"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.mpi.rank == 0:
