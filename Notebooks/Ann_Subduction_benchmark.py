@@ -228,8 +228,10 @@ uw.mpi.barrier()
 # tWalls = mesh.specialSets["MaxJ_VertexSet"]
 upperSurf = mesh.specialSets["upper_surface_VertexSet"]
 lowerSurf = mesh.specialSets["lower_surface_VertexSet"]
-rightWall = mesh.specialSets["Right_VertexSet"]
-leftWall = mesh.specialSets["Left_VertexSet"]
+rightSide = mesh.specialSets["MinJ_VertexSet"]
+leftSide = mesh.specialSets["MaxJ_VertexSet"]
+# rightWall = mesh.specialSets["Right_VertexSet"]
+# leftWall = mesh.specialSets["Left_VertexSet"]
 # freeslipBC = uw.conditions.DirichletCondition(
 #     variable=velocityField, indexSetsPerDof=(iWalls, jWalls)
 # )
@@ -315,7 +317,7 @@ checkpoint(
 )
 
 
-stokesSLE = uw.systems.Curvilinear_Stokes(
+stokesSLE = uw.systems.Stokes(
     velocityField,
     pressureField,
     fn_viscosity=viscosityFn,
