@@ -64,7 +64,7 @@ uw.mpi.barrier()
 
 
 mesh = uw.mesh.FeMesh_Annulus(
-    elementRes=(512, 256),
+    elementRes=(128, 256),
     radialLengths=(nd(earthRadius - modelHeight + airHeight), nd(earthRadius)),
     angularExtent=((180 - ThetaRAD.magnitude) / 2, 90 + ThetaRAD.magnitude / 2),
     periodic=[False, False],
@@ -265,6 +265,17 @@ freeSlipAn = uw.conditions.RotatedDirichletCondition(
     basis_vectors=(mesh.bnd_vec_normal, mesh.bnd_vec_tangent),
 )
 
+figVdot = glucifer.Figure(store=store, figsize=(1200, 450))
+# fig.append( glucifer.objects.Mesh( mesh))
+figVdot.append(
+    glucifer.objects.Surface(
+        mesh,
+        fn.math.dot(velocityField, velocityField),
+        # logScale=True,
+        colours=glucifer.lavavu.matplotlib_colourmap("viridis"),
+    )
+)
+figVdot.save(outputDir + "/Vdot" + str(step).zfill(5))
 
 airDensity = 0.01
 mantleDensity = 0.0
@@ -299,10 +310,9 @@ projVisMesh.solve()
 figV = glucifer.Figure(store=store, figsize=(1200, 450))
 # fig.append( glucifer.objects.Mesh( mesh))
 figV.append(
-    glucifer.objects.Points(
-        swarm,
+    glucifer.objects.Surface(
+        mesh,
         viscosityFn,
-        pointsize=2,
         logScale=True,
         colours=glucifer.lavavu.matplotlib_colourmap("inferno_r"),
     )
@@ -428,7 +438,7 @@ def postSolve():
 # stokesSolverAN.solve(print_stats=True, reinitialise=True)
 
 while step < maxSteps:
-    # velocityField.data[:] = 0.0
+    setVbc()  # seems important
     stokesSolverAN.solve(callback_post_solve=postSolve)
     # uw.libUnderworld.Underworld.AXequalsX(
     #     stokesSLE._rot._cself, stokesSLE._velocitySol._cself, False
@@ -439,13 +449,17 @@ while step < maxSteps:
     step += 1
     time += dt
     projVisMesh.solve()
+    if step % 5 == 0 or step == 1 or step == 2:
+        figV.save(outputDir + "/eta" + str(step).zfill(5))
+        figVdot.save(outputDir + "/Vdot" + str(step).zfill(5))
 
-    checkpoint(
-        mesh,
-        fieldDict,
-        swarm,
-        swarmDict,
-        index=step,
-        modeltime=dm(time, 1.0 * u.megayear).magnitude,
-        prefix=outputDir,
-    )
+    if step % 10 == 0 or step == 1 or step == 2:
+        checkpoint(
+            mesh,
+            fieldDict,
+            swarm,
+            swarmDict,
+            index=step,
+            modeltime=dm(time, 1.0 * u.megayear).magnitude,
+            prefix=outputDir,
+        )
