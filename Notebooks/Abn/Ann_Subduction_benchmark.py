@@ -63,7 +63,7 @@ uw.mpi.barrier()
 
 
 mesh = uw.mesh.FeMesh_Annulus(
-    elementRes=(128, 512),
+    elementRes=(128, 256),
     radialLengths=(nd(earthRadius - modelHeight + airHeight), nd(earthRadius)),
     angularExtent=((180 - ThetaRAD.magnitude) / 2, 90 + ThetaRAD.magnitude / 2),
     periodic=[False, False],
@@ -195,13 +195,14 @@ def checkpoint(
         if not hasattr(checkpoint, "mH"):
             checkpoint.mH = mesh.save(prefix + meshName + ".h5")
         mh = checkpoint.mH
-        uw.mpi.barrier()
+
         for key, value in fieldDict.items():
             filename = prefix + key + "-" + ii
             handle = value.save(filename + ".h5")
-            if enable_xdmf:
-                value.xdmf(filename, handle, key, mh, meshName, modeltime=time)
             uw.mpi.barrier()
+            if uw.mpi.rank == 0:
+                if enable_xdmf:
+                    value.xdmf(filename, handle, key, mh, meshName, modeltime=time)
 
     # is there a swarm
     if swarm is not None:
@@ -218,10 +219,13 @@ def checkpoint(
                 )
         sH = swarm.save(prefix + swarmName + "-" + ii + ".h5")
         for key, value in swarmDict.items():
+
             filename = prefix + key + "-" + ii
             handle = value.save(filename + ".h5")
-            if enable_xdmf:
-                value.xdmf(filename, handle, key, sH, swarmName, modeltime=time)
+            uw.mpi.barrier()
+            if uw.mpi.rank == 0:
+                if enable_xdmf:
+                    value.xdmf(filename, handle, key, sH, swarmName, modeltime=time)
             uw.mpi.barrier()
 
 
@@ -331,6 +335,7 @@ checkpoint(
     swarmDict,
     index=step,
     modeltime=dm(time, 1.0 * u.megayear).magnitude,
+    prefix=outputDirName,
 )
 
 
@@ -449,4 +454,5 @@ while step < maxSteps:
         swarmDict,
         index=step,
         modeltime=dm(time, 1.0 * u.megayear).magnitude,
+        prefix=outputDirName,
     )
