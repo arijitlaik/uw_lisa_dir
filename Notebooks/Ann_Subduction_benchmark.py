@@ -53,8 +53,8 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 
 step = 0
 time = 0.0
-maxSteps = 1000
-outputDirName = "AnnSubBenchmark_SA"
+maxSteps = 1
+outputDirName = "AnnSubBenchmark_SA_Hi"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.mpi.rank == 0:
     if not os.path.exists(outputDir):
