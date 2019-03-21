@@ -115,7 +115,7 @@ store = glucifer.Store(outputDir + "/gfxstore") if gldbFlag is True else None
 if store is not None:
     store.step = 0
 
-fig = glucifer.Figure(store=store, figsize=(1200, 450))
+fig = glucifer.Figure(store=None, figsize=(2400, 900))
 # fig.append( glucifer.objects.Mesh( mesh ,nodeNumbers=True))
 fig.append(glucifer.objects.Mesh(mesh))
 # fig.append( glucifer.objects.Points( swarm,pointsize=4))
