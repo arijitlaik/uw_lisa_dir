@@ -12,13 +12,43 @@ from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
 import glucifer
 import numpy as np
 import collections
+import xml.etree.ElementTree as elementTree
+
 
 # turnables
 wholeMantleFlag = False
 airLayer = True
 gldbFlag = False
-restartFlag = True
+# restartFlag = True
+outputDirName = "AnnSubBenchmark_SA_Lo_dot001"
+# outputDirName = "T_SA_Lo_dot001"
 
+outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
+if uw.mpi.rank == 0:
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
+checkpointedSteps = np.sort(
+    np.unique(
+        np.array(
+            [
+                int(os.path.splitext(filename)[0].split("-")[-1])
+                for filename in os.listdir(outputDir)
+                if "-" in filename
+            ]
+        )
+    )
+)
+restartFlag = True if checkpointedSteps.shape[0] > 0 else False
+step = checkpointedSteps[-1] if restartFlag else 0
+
+if step > 0:
+    dmTime = (
+        elementTree.parse(outputDir + "velocity" + "-" + str(step).zfill(5) + ".xdmf")
+        .getiterator("Time")[0]
+        .get("Value")
+    )
+else:
+    dmTime = 0
 #
 # Scaling and Units
 #
@@ -54,16 +84,11 @@ scaling_coefficients["[time]"] = Kt.to_base_units()
 scaling_coefficients["[mass]"] = KM.to_base_units()
 
 
-step = 0
-time = 0.0
-maxSteps = 1
-# outputDirName = "AnnSubBenchmark_SA_Lo_dot001"
-outputDirName = "T_SA_Lo_dot001"
+dmTime = float(dmTime)
+step = int(step)
+time = nd(dmTime * 1.0 * u.megayear)
+maxSteps = 1000
 
-outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
-if uw.mpi.rank == 0:
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
 try:
     tflag = os.environ["UW_ENABLE_TIMING"]
 except KeyError:
@@ -227,6 +252,7 @@ swarmDict["materials"] = materialVariable
 refieldDict = collections.OrderedDict()  # important to avoid racing conditions
 refieldDict["velocity"] = velocityField
 refieldDict["pressure"] = pressureField
+
 if restartFlag is True:
     checkpoint(
         mesh,
@@ -299,7 +325,8 @@ figP.append(
         discrete=True,
     )
 )
-figP.save(outputDir + "/Par")
+if restartFlag is False:
+    figP.save(outputDir + "/Par")
 
 
 # I = mesh.specialSets["inner"]
@@ -352,7 +379,8 @@ figVdot.append(
         colours=glucifer.lavavu.matplotlib_colourmap("viridis"),
     )
 )
-figVdot.save(outputDir + "/Vdot" + str(step).zfill(5))
+if restartFlag is False:
+    figVdot.save(outputDir + "/Vdot" + str(step).zfill(5))
 
 airDensity = 0.0
 mantleDensity = 0.001
@@ -364,7 +392,8 @@ buoyancyFn = -1.0 * densityFn * mesh.unitvec_r_Fn
 
 figD = glucifer.Figure(store=store, figsize=(1200, 450))
 figD.append(glucifer.objects.Points(swarm, densityFn, colours="spectral", pointsize=2))
-figD.save(outputDir + "/Den")
+if restartFlag is False:
+    figD.save(outputDir + "/Den")
 
 figbuoyancy = glucifer.Figure(figsize=(1200, 450), name="Buoyancy Map")
 figbuoyancy.Points(
@@ -374,7 +403,8 @@ figbuoyancy.Points(
     colours="(0.000)white (0.001)AntiqueWhite   (1.001)Gold"
     # colours=list(glucifer.lavavu.matplotlib_colourmap("Accent")),
 )
-figbuoyancy.save(outputDir + "/BfnDot")
+if restartFlag is False:
+    figbuoyancy.save(outputDir + "/BfnDot")
 
 airViscosity = 1e-2
 mantleViscosity = 1.0
@@ -399,7 +429,8 @@ figV.append(
         colours=glucifer.lavavu.matplotlib_colourmap("inferno_r"),
     )
 )
-figV.save(outputDir + "/eta" + str(step).zfill(5))
+if restartFlag is False:
+    figV.save(outputDir + "/eta" + str(step).zfill(5))
 
 
 uw.mpi.barrier()
