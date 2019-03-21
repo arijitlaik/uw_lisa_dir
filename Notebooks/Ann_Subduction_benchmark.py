@@ -322,7 +322,7 @@ figbuoyancy.Points(
     # colours=list(glucifer.lavavu.matplotlib_colourmap("Accent")),
 )
 figbuoyancy.save(outputDir + "/BfnDot")
-exit()
+
 airViscosity = 1e-2
 mantleViscosity = 1.0
 lowermantleViscosity = 1e2
