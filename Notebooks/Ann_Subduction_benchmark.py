@@ -301,9 +301,9 @@ figVdot.append(
 )
 figVdot.save(outputDir + "/Vdot" + str(step).zfill(5))
 
-airDensity = 0.001
-mantleDensity = 0.0
-slabDensity = 1.0
+airDensity = 0.0
+mantleDensity = 0.01
+slabDensity = 1.01
 densityMap = {0: airDensity, 1: mantleDensity, 2: mantleDensity, 3: slabDensity}
 densityFn = fn.branching.map(fn_key=materialVariable, mapping=densityMap)
 buoyancyFn = -1.0 * densityFn * mesh.unitvec_r_Fn
@@ -316,12 +316,14 @@ figD.save(outputDir + "/Den")
 figbuoyancy = glucifer.Figure(figsize=(1200, 450), name="Buoyancy Map")
 figbuoyancy.Points(
     swarm,
-    fn.math.dot(buoyancyFn, buoyancyFn),
+    densityFn,
     pointsize=3,
-    colours="(0.000)white (0.001)Blue   (1.00)Red"
+    logScale=True,
+    colours="(0.000)white (0.01)AntiqueWhite   (1.00)Gold"
     # colours=list(glucifer.lavavu.matplotlib_colourmap("Accent")),
 )
 figbuoyancy.save(outputDir + "/BfnDot")
+exit()
 airViscosity = 1e-2
 mantleViscosity = 1.0
 lowermantleViscosity = 1e2
