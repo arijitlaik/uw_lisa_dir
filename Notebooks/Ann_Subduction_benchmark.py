@@ -218,6 +218,7 @@ def checkpoint(
         if load:
             if uw.mpi.rank == 0:
                 print("Loading Swarm.....")
+                sys.stdout.flush()
             swarm.load(prefix + swarmName + "-" + ii + ".h5")
         else:
             if uw.mpi.rank == 0:
