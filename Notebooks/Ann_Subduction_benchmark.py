@@ -87,7 +87,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 dmTime = float(dmTime)
 step = int(step)
 time = nd(dmTime * 1.0 * u.megayear)
-maxSteps = 1000
+maxSteps = 2000
 
 try:
     tflag = os.environ["UW_ENABLE_TIMING"]
@@ -102,7 +102,7 @@ uw.mpi.barrier()
 if tflag:
     uw.timing.start()
 mesh = uw.mesh.FeMesh_Annulus(
-    elementRes=(16, 32),
+    elementRes=(192, 384),
     radialLengths=(nd(earthRadius - modelHeight + airHeight), nd(earthRadius)),
     angularExtent=((180 - ThetaRAD.magnitude) / 2, 90 + ThetaRAD.magnitude / 2),
     periodic=[False, False],
@@ -268,7 +268,7 @@ store = glucifer.Store(outputDir + "/gfxstore") if gldbFlag is True else None
 if store is not None:
     store.step = 0
 
-fig = glucifer.Figure(store=None, figsize=(2400, 900))
+fig = glucifer.Figure(store=None, figsize=(1200, 450))
 # fig.append( glucifer.objects.Mesh( mesh ,nodeNumbers=True))
 fig.append(glucifer.objects.Mesh(mesh))
 # fig.append( glucifer.objects.Points( swarm,pointsize=4))
