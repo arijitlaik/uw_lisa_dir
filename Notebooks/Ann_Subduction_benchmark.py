@@ -13,13 +13,16 @@ import glucifer
 import numpy as np
 import collections
 
+# turnables
+wholeMantleFlag = False
+airLayer = True
+gldbFlag = False
+# restartFlag = False
 
 #
 # Scaling and Units
 #
 # Dimentional Parameters
-wholeMantleFlag = False
-airLayer = True
 airHeight = 50.0 * u.kilometer if airLayer else 0.0 * u.kilometer
 modelHeight = 2891 * u.kilometer if wholeMantleFlag else 1000.0 * u.kilometer
 earthRadius = 6371 * u.kilometer
@@ -54,7 +57,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 step = 0
 time = 0.0
 maxSteps = 1
-outputDirName = "AnnSubBenchmark_SA_Hi"
+outputDirName = "AnnSubBenchmark_SA_Lo_dot001"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.mpi.rank == 0:
     if not os.path.exists(outputDir):
@@ -72,7 +75,7 @@ uw.mpi.barrier()
 if tflag:
     uw.timing.start()
 mesh = uw.mesh.FeMesh_Annulus(
-    elementRes=(256, 512),
+    elementRes=(192, 384),
     radialLengths=(nd(earthRadius - modelHeight + airHeight), nd(earthRadius)),
     angularExtent=((180 - ThetaRAD.magnitude) / 2, 90 + ThetaRAD.magnitude / 2),
     periodic=[False, False],
@@ -81,8 +84,8 @@ mesh = uw.mesh.FeMesh_Annulus(
 
 velocityField = mesh.add_variable(nodeDofCount=mesh.dim)
 pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
-lower = mesh.specialSets["MinI_VertexSet"]
-upper = mesh.specialSets["MaxI_VertexSet"]
+viscosityField = mesh.add_variable(1)
+
 swarm = uw.swarm.Swarm(mesh, particleEscape=True)
 materialVariable = swarm.add_variable(count=1, dataType="int")
 layout = uw.swarm.layouts.PerCellSpaceFillerLayout(swarm, particlesPerCell=20)
@@ -99,8 +102,16 @@ swarm_popcontrol = uw.swarm.PopulationControl(
     particlesPerCell=20,
 )
 
+fieldDict = collections.OrderedDict()
+fieldDict["velocity"] = velocityField
+fieldDict["pressure"] = pressureField
+fieldDict["meshViscosity"] = viscosityField
 
-store = glucifer.Store(outputDir + "/gfxstore")
+swarmDict = collections.OrderedDict()
+swarmDict["materials"] = materialVariable
+# traceDict = {"tcoords": tincord, "tvel": tracerVelocity}
+
+store = glucifer.Store(outputDir + "/gfxstore") if gldbFlag is True else None
 if store is not None:
     store.step = 0
 
@@ -205,6 +216,9 @@ def checkpoint(
 
         # see if we have already saved the mesh. It only needs to be saved once
         if not hasattr(checkpoint, "mH"):
+            if uw.mpi.rank == 0:
+                print("Saving Mesh.....")
+                sys.stdout.flush()
             checkpoint.mH = mesh.save(prefix + meshName + ".h5")
         mh = checkpoint.mH
 
@@ -252,8 +266,8 @@ lowerSurf = mesh.specialSets["lower_surface_VertexSet"]
 rightSide = mesh.specialSets["MinJ_VertexSet"]
 leftSide = mesh.specialSets["MaxJ_VertexSet"]
 cEdge = (
-    (upper & rightSide)
-    + (upper & leftSide)
+    (upperSurf & rightSide)
+    + (upperSurf & leftSide)
     + (lowerSurf & rightSide)
     + (lowerSurf & leftSide)
 )
@@ -272,12 +286,11 @@ setVbc()
 
 freeSlipAn = uw.conditions.RotatedDirichletCondition(
     variable=velocityField,
-    indexSetsPerDof=(upperSurf + lowerSurf + cEdge, rightSide + leftSide + cEdge),
+    indexSetsPerDof=(upperSurf + lowerSurf, rightSide + leftSide + cEdge),
     basis_vectors=(mesh.bnd_vec_normal, mesh.bnd_vec_tangent),
 )
 
 figVdot = glucifer.Figure(store=store, figsize=(1200, 450))
-# fig.append( glucifer.objects.Mesh( mesh))
 figVdot.append(
     glucifer.objects.Surface(
         mesh,
@@ -288,7 +301,7 @@ figVdot.append(
 )
 figVdot.save(outputDir + "/Vdot" + str(step).zfill(5))
 
-airDensity = 0.01
+airDensity = 0.001
 mantleDensity = 0.0
 slabDensity = 1.0
 densityMap = {0: airDensity, 1: mantleDensity, 2: mantleDensity, 3: slabDensity}
@@ -297,12 +310,19 @@ buoyancyFn = -1.0 * densityFn * mesh.unitvec_r_Fn
 
 
 figD = glucifer.Figure(store=store, figsize=(1200, 450))
-# fig.append( glucifer.objects.Mesh( mesh))
 figD.append(glucifer.objects.Points(swarm, densityFn, colours="spectral", pointsize=2))
 figD.save(outputDir + "/Den")
 
-
-airViscosity = 1.0
+figbuoyancy = glucifer.Figure(figsize=(1200, 450), name="Buoyancy Map")
+figbuoyancy.Points(
+    swarm,
+    fn.math.dot(buoyancyFn, buoyancyFn),
+    pointsize=3,
+    colours="(0.000)white (0.001)Blue   (1.00)Red"
+    # colours=list(glucifer.lavavu.matplotlib_colourmap("Accent")),
+)
+figbuoyancy.save(outputDir + "/BfnDot")
+airViscosity = 1e-2
 mantleViscosity = 1.0
 lowermantleViscosity = 1e2
 slabViscosity = 1e2
@@ -313,17 +333,14 @@ viscosityMap = {
     3: slabViscosity,
 }
 swarmviscosityFn = fn.branching.map(fn_key=materialVariable, mapping=viscosityMap)
-
-viscosityFn = mesh.add_variable(1)
-projVisMesh = uw.utils.MeshVariable_Projection(viscosityFn, swarmviscosityFn, type=0)
+projVisMesh = uw.utils.MeshVariable_Projection(viscosityField, swarmviscosityFn, type=0)
 projVisMesh.solve()
 
 figV = glucifer.Figure(store=store, figsize=(1200, 450))
-# fig.append( glucifer.objects.Mesh( mesh))
 figV.append(
     glucifer.objects.Surface(
         mesh,
-        viscosityFn,
+        viscosityField,
         logScale=True,
         colours=glucifer.lavavu.matplotlib_colourmap("inferno_r"),
     )
@@ -331,15 +348,6 @@ figV.append(
 figV.save(outputDir + "/eta" + str(step).zfill(5))
 
 
-fieldDict = collections.OrderedDict()
-fieldDict["velocity"] = velocityField
-fieldDict["pressure"] = pressureField
-fieldDict["meshViscosity"] = viscosityFn
-
-# swarmDict = {"materials": materialVariable}
-swarmDict = collections.OrderedDict()
-swarmDict["materials"] = materialVariable
-# traceDict = {"tcoords": tincord, "tvel": tracerVelocity}
 uw.mpi.barrier()
 
 checkpoint(
@@ -356,7 +364,7 @@ checkpoint(
 stokesSLE = uw.systems.Stokes(
     velocityField,
     pressureField,
-    fn_viscosity=viscosityFn,
+    fn_viscosity=viscosityField,
     fn_bodyforce=buoyancyFn,
     conditions=freeSlipAn,
     _removeBCs=False,
@@ -408,14 +416,11 @@ Cell2Nodes = uw.utils.MeshVariable_Projection(NodePressure, pressureField, type=
 Nodes2Cell = uw.utils.MeshVariable_Projection(pressureField, NodePressure, type=0)
 
 
-NodePressure = uw.mesh.MeshVariable(mesh, nodeDofCount=1)
-Cell2Nodes = uw.utils.MeshVariable_Projection(NodePressure, pressureField, type=0)
-Nodes2Cell = uw.utils.MeshVariable_Projection(pressureField, NodePressure, type=0)
-
-
 def smooth_pressure():
     if uw.mpi.rank == 0:
         print("Smoothing Pressure...")
+        sys.stdout.flush()
+
     Cell2Nodes.solve()
     Nodes2Cell.solve()
 
@@ -462,7 +467,8 @@ while step < maxSteps:
     time += dt
     projVisMesh.solve()
     if step % 5 == 0 or step == 1 or step == 2:
-        store.step = step
+        if store is not None:
+            store.step = step
         figV.save(outputDir + "/eta" + str(step).zfill(5))
         figVdot.save(outputDir + "/Vdot" + str(step).zfill(5))
     if step % 10 == 0 or step == 1 or step == 2:
