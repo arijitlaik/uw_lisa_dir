@@ -17,7 +17,7 @@ import collections
 wholeMantleFlag = False
 airLayer = True
 gldbFlag = False
-# restartFlag = False
+restartFlag = True
 
 #
 # Scaling and Units
@@ -57,7 +57,9 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 step = 0
 time = 0.0
 maxSteps = 1
-outputDirName = "AnnSubBenchmark_SA_Lo_dot001"
+# outputDirName = "AnnSubBenchmark_SA_Lo_dot001"
+outputDirName = "T_SA_Lo_dot001"
+
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.mpi.rank == 0:
     if not os.path.exists(outputDir):
@@ -75,7 +77,7 @@ uw.mpi.barrier()
 if tflag:
     uw.timing.start()
 mesh = uw.mesh.FeMesh_Annulus(
-    elementRes=(192, 384),
+    elementRes=(16, 32),
     radialLengths=(nd(earthRadius - modelHeight + airHeight), nd(earthRadius)),
     angularExtent=((180 - ThetaRAD.magnitude) / 2, 90 + ThetaRAD.magnitude / 2),
     periodic=[False, False],
@@ -89,7 +91,8 @@ viscosityField = mesh.add_variable(1)
 swarm = uw.swarm.Swarm(mesh, particleEscape=True)
 materialVariable = swarm.add_variable(count=1, dataType="int")
 layout = uw.swarm.layouts.PerCellSpaceFillerLayout(swarm, particlesPerCell=20)
-swarm.populate_using_layout(layout)
+if restartFlag is False:
+    swarm.populate_using_layout(layout)
 advector = uw.systems.SwarmAdvector(velocityField=velocityField, swarm=swarm)
 swarm_popcontrol = uw.swarm.PopulationControl(
     swarm,
@@ -101,75 +104,6 @@ swarm_popcontrol = uw.swarm.PopulationControl(
     aggressiveThreshold=0.95,
     particlesPerCell=20,
 )
-
-fieldDict = collections.OrderedDict()
-fieldDict["velocity"] = velocityField
-fieldDict["pressure"] = pressureField
-fieldDict["meshViscosity"] = viscosityField
-
-swarmDict = collections.OrderedDict()
-swarmDict["materials"] = materialVariable
-# traceDict = {"tcoords": tincord, "tvel": tracerVelocity}
-
-store = glucifer.Store(outputDir + "/gfxstore") if gldbFlag is True else None
-if store is not None:
-    store.step = 0
-
-fig = glucifer.Figure(store=None, figsize=(2400, 900))
-# fig.append( glucifer.objects.Mesh( mesh ,nodeNumbers=True))
-fig.append(glucifer.objects.Mesh(mesh))
-# fig.append( glucifer.objects.Points( swarm,pointsize=4))
-fig.save(outputDir + "/mesh")
-
-
-radialFn = fn.math.sqrt(fn.math.dot(fn.coord(), fn.coord()))
-thetaFn = fn.math.atan2(fn.coord()[1], fn.coord()[0])
-
-
-# thetaFn.evaluate()
-
-
-air = mesh.unit_heightFn.evaluate(swarm.data) > nd(modelHeight - airHeight)
-lowermantle = mesh.unit_heightFn.evaluate(swarm.data) < nd(
-    modelHeight - airHeight - 660.0 * u.kilometer
-)
-slab = (
-    (mesh.unit_heightFn.evaluate(swarm.data) < nd(modelHeight - airHeight))
-    & (
-        mesh.unit_heightFn.evaluate(swarm.data)
-        > nd(modelHeight - airHeight - 100.0 * u.kilometer)
-    )
-    & (mesh.thetaFn.evaluate(swarm.data) <= np.pi / 2)
-)
-perturb = (
-    (mesh.unit_heightFn.evaluate(swarm.data) < nd(modelHeight - airHeight))
-    & (
-        mesh.unit_heightFn.evaluate(swarm.data)
-        > nd(modelHeight - airHeight - 200.0 * u.kilometer)
-    )
-    & (mesh.thetaFn.evaluate(swarm.data) <= np.pi / 2)
-    & (
-        mesh.thetaFn.evaluate(swarm.data)
-        >= np.pi / 2 - (100.0 * u.kilometer / earthRadius).magnitude
-    )
-)
-materialVariable.data[:] = 1
-materialVariable.data[air] = 0
-materialVariable.data[lowermantle] = 2
-materialVariable.data[slab | perturb] = 3
-
-figP = glucifer.Figure(store=store, figsize=(1200, 450))
-# fig.append( glucifer.objects.Mesh( mesh))
-figP.append(
-    glucifer.objects.Points(
-        swarm,
-        materialVariable,
-        colours="#00CED1 #F0E68C #FFA500 #2F4F4F",
-        pointsize=2,
-        discrete=True,
-    )
-)
-figP.save(outputDir + "/Par")
 
 
 def checkpoint(
@@ -183,6 +117,7 @@ def checkpoint(
     swarmName="swarm",
     prefix="./",
     enable_xdmf=True,
+    load=False,
 ):
     # Check the prefix is valid
     if prefix is not None:
@@ -206,16 +141,22 @@ def checkpoint(
         # Error check the mesh and fields
         if not isinstance(mesh, uw.mesh.FeMesh):
             raise TypeError("'mesh' is not of type uw.mesh.FeMesh")
-        if not isinstance(fieldDict, dict):
-            raise TypeError("'fieldDict' is not of type dict")
-        for key, value in fieldDict.items():
-            if not isinstance(value, uw.mesh.MeshVariable):
-                raise TypeError(
-                    "'fieldDict' must contain uw.mesh.MeshVariable elements"
-                )
+        if fieldDict is not None:
+            if not isinstance(fieldDict, dict):
+                raise TypeError("'fieldDict' is not of type dict")
+            for key, value in fieldDict.items():
+                if not isinstance(value, uw.mesh.MeshVariable):
+                    raise TypeError(
+                        "'fieldDict' must contain uw.mesh.MeshVariable elements"
+                    )
 
         # see if we have already saved the mesh. It only needs to be saved once
         if not hasattr(checkpoint, "mH"):
+            if load:
+                if uw.mpi.rank == 0:
+                    print("Loading Mesh.....")
+                    sys.stdout.flush()
+                mesh.load(prefix + meshName + ".h5")
             if uw.mpi.rank == 0:
                 print("Saving Mesh.....")
                 sys.stdout.flush()
@@ -224,9 +165,16 @@ def checkpoint(
 
         for key, value in fieldDict.items():
             filename = prefix + key + "-" + ii
-            handle = value.save(filename + ".h5")
-            if enable_xdmf:
-                value.xdmf(filename, handle, key, mh, meshName, modeltime=time)
+            if load:
+                if uw.mpi.rank == 0:
+                    print("Loading MeshVariable(s).....")
+                if uw.mpi.rank == 0:
+                    print("Loading '{0}.h5' .....".format(filename))
+                value.load(filename + ".h5")
+            else:
+                handle = value.save(filename + ".h5")
+                if enable_xdmf:
+                    value.xdmf(filename, handle, key, mh, meshName, modeltime=time)
 
     # is there a swarm
     if swarm is not None:
@@ -234,19 +182,124 @@ def checkpoint(
         # Error check the swarms
         if not isinstance(swarm, uw.swarm.Swarm):
             raise TypeError("'swarm' is not of type uw.swarm.Swarm")
-        if not isinstance(swarmDict, dict):
-            raise TypeError("'swarmDict' is not of type dict")
-        for key, value in swarmDict.items():
-            if not isinstance(value, uw.swarm.SwarmVariable):
-                raise TypeError(
-                    "'fieldDict' must contain uw.swarm.SwarmVariable elements"
-                )
-        sH = swarm.save(prefix + swarmName + "-" + ii + ".h5")
+        if swarmDict is not None:
+            if not isinstance(swarmDict, dict):
+                raise TypeError("'swarmDict' is not of type dict")
+            for key, value in swarmDict.items():
+                if not isinstance(value, uw.swarm.SwarmVariable):
+                    raise TypeError(
+                        "'SwarmDict' must contain uw.swarm.SwarmVariable elements"
+                    )
+        if load:
+            if uw.mpi.rank == 0:
+                print("Loading Swarm.....")
+            swarm.load(prefix + swarmName + "-" + ii + ".h5")
+        else:
+            if uw.mpi.rank == 0:
+                print("Saving Swarm.....")
+                sys.stdout.flush()
+            sH = swarm.save(prefix + swarmName + "-" + ii + ".h5")
         for key, value in swarmDict.items():
             filename = prefix + key + "-" + ii
-            handle = value.save(filename + ".h5")
-            if enable_xdmf:
-                value.xdmf(filename, handle, key, sH, swarmName, modeltime=time)
+            if load:
+                if uw.mpi.rank == 0:
+                    print("Loading SwarmVariable(s).....")
+                    if uw.mpi.rank == 0:
+                        print("Loading '{0}.h5' .....".format(filename))
+                value.load(filename + ".h5")
+            else:
+                handle = value.save(filename + ".h5")
+                if enable_xdmf:
+                    value.xdmf(filename, handle, key, sH, swarmName, modeltime=time)
+    if uw.mpi.rank == 0:
+        print("Done.....")
+        sys.stdout.flush()
+
+
+fieldDict = collections.OrderedDict()  # important to avoid racing conditions
+fieldDict["velocity"] = velocityField
+fieldDict["pressure"] = pressureField
+fieldDict["meshViscosity"] = viscosityField
+
+swarmDict = collections.OrderedDict()
+swarmDict["materials"] = materialVariable
+# traceDict = {"tcoords": tincord, "tvel": tracerVelocity}
+refieldDict = collections.OrderedDict()  # important to avoid racing conditions
+refieldDict["velocity"] = velocityField
+refieldDict["pressure"] = pressureField
+if restartFlag is True:
+    checkpoint(
+        mesh,
+        refieldDict,
+        swarm,
+        swarmDict,
+        index=step,
+        modeltime=dm(time, 1.0 * u.megayear).magnitude,
+        prefix=outputDir,
+        load=True,
+    )
+store = glucifer.Store(outputDir + "/gfxstore") if gldbFlag is True else None
+if store is not None:
+    store.step = 0
+
+fig = glucifer.Figure(store=None, figsize=(2400, 900))
+# fig.append( glucifer.objects.Mesh( mesh ,nodeNumbers=True))
+fig.append(glucifer.objects.Mesh(mesh))
+# fig.append( glucifer.objects.Points( swarm,pointsize=4))
+fig.save(outputDir + "/mesh")
+
+
+radialFn = fn.math.sqrt(fn.math.dot(fn.coord(), fn.coord()))
+thetaFn = fn.math.atan2(fn.coord()[1], fn.coord()[0])
+
+
+# thetaFn.evaluate()
+
+if restartFlag is False:
+
+    air = mesh.unit_heightFn.evaluate(swarm.data) > nd(modelHeight - airHeight)
+    lowermantle = mesh.unit_heightFn.evaluate(swarm.data) < nd(
+        modelHeight - airHeight - 660.0 * u.kilometer
+    )
+    slab = (
+        (mesh.unit_heightFn.evaluate(swarm.data) < nd(modelHeight - airHeight))
+        & (
+            mesh.unit_heightFn.evaluate(swarm.data)
+            > nd(modelHeight - airHeight - 100.0 * u.kilometer)
+        )
+        & (mesh.thetaFn.evaluate(swarm.data) <= np.pi / 2)
+    )
+    perturb = (
+        (mesh.unit_heightFn.evaluate(swarm.data) < nd(modelHeight - airHeight))
+        & (
+            mesh.unit_heightFn.evaluate(swarm.data)
+            > nd(modelHeight - airHeight - 200.0 * u.kilometer)
+        )
+        & (mesh.thetaFn.evaluate(swarm.data) <= np.pi / 2)
+        & (
+            mesh.thetaFn.evaluate(swarm.data)
+            >= np.pi / 2 - (100.0 * u.kilometer / earthRadius).magnitude
+        )
+    )
+
+    materialVariable.data[:] = 1
+    materialVariable.data[air] = 0
+    materialVariable.data[lowermantle] = 2
+    materialVariable.data[slab | perturb] = 3
+
+
+figP = glucifer.Figure(store=store, figsize=(1200, 450))
+# fig.append( glucifer.objects.Mesh( mesh))
+figP.append(
+    glucifer.objects.Points(
+        swarm,
+        materialVariable,
+        colours="#00CED1 #F0E68C #FFA500 #2F4F4F",
+        pointsize=2,
+        discrete=True,
+    )
+)
+figP.save(outputDir + "/Par")
 
 
 # I = mesh.specialSets["inner"]
@@ -350,16 +403,16 @@ figV.save(outputDir + "/eta" + str(step).zfill(5))
 
 
 uw.mpi.barrier()
-
-checkpoint(
-    mesh,
-    fieldDict,
-    swarm,
-    swarmDict,
-    index=step,
-    modeltime=dm(time, 1.0 * u.megayear).magnitude,
-    prefix=outputDir,
-)
+if restartFlag is False:
+    checkpoint(
+        mesh,
+        fieldDict,
+        swarm,
+        swarmDict,
+        index=step,
+        modeltime=dm(time, 1.0 * u.megayear).magnitude,
+        prefix=outputDir,
+    )
 
 
 stokesSLE = uw.systems.Stokes(
