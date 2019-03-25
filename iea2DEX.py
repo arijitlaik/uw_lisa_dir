@@ -808,20 +808,24 @@ store = None
 figParticle = glucifer.Figure(
     store, figsize=figSize, name="Materials", boundingBox=bBox
 )
+
+category20 = "(1.0)#1f77b4 (2.0)#aec7e8 (3.0)#2ca02c (4.0)#98df8a (5.0)#d62728  (7.0)#E5DA3E  (8.0)#FF7E57 (6.0)#ff9896 (9.0)#9467bd (10.0)#c5b0d5 (11.0)#8c564b (12.0)#c49c94 (13.0)#bcbd22 (14.0)#7f7f7f"
+# (13.0)#e377c2 (14.0)#f7b6d2 (16.0)#c7c7c7 (17.0)#bcbd22 (18.0)#dbdb8d (20.0)#9edae5"
+print("done")
+
 figParticle.Points(
     swarm,
     materialVariable,
     pointsize=1.9,
     discrete=True,
-    # colours="#e6194B #3cb44b  #ffe119 #4363d8 #f58231 #42d4f4 #f032e6 #fabebe #469990 #e6beff #9A6324 #fffac8, #800000 #aaffc3 #000075 #a9a9a9",
-    colours="#e6194B #3cb44b  #ffe119 #4363d8 #f58231 #42d4f4 #f032e6 #fabebe #469990 #e6beff #9A6324 #fffac8 #800000",
+    colours=category20,
     fn_mask=materialVariable > 0,
     valueRange=[1, len(modelMaterials) - 1],
 )
 figParticle.objects[0].colourBar["binlabels"] = True
 figParticle.objects[0].colourBar["size"] = [0.8, 0.02]
 if restartFlag is False:
-    figParticle.save(outputDir + "/Particles_Initial")
+    figParticle.save(outputDir + "/Particles_Initiald")
 exit()
 # figParticle.show()
 
