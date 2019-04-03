@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "tea2_NU_TX"
+outputDirName = "4x12_8-00175_DrhoLM30_FaBa"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -632,7 +632,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": 1 * refViscosity,  # power_visc(3.5)
+        "eta0": refViscosity,
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -663,21 +663,21 @@ modelMaterials = [
     {
         "name": "Lower Crust Indo-Australian Plate",
         "shape": slabshapes[1],
-        "viscosity": 1e3 * refViscosity,
+        "viscosity": 1e2 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
         "density": 3280.0 * u.kilogram / u.meter ** 3,
     },  # 5.*u.megapascal,
     {
         "name": "Lithospheric Mantle Crust Indo-Australian Plate",
         "shape": slabshapes[2],
-        "viscosity": 1e5 * refViscosity,
-        "cohesion": 400.0 * u.megapascal,  # hs
+        "viscosity": 1e3 * refViscosity,
+        "cohesion": 350.0 * u.megapascal,  # hs
         "density": 3280.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Indo-Australian Plate",
         "shape": slabshapes[3],
-        "viscosity": 5e2 * refViscosity,
+        "viscosity": 5e1 * refViscosity,
         "density": 3280.0 * u.kilogram / u.meter ** 3,
         "cohesion": 30.0 * u.megapascal,
     },
@@ -711,8 +711,8 @@ modelMaterials = [
     {
         "name": "Lithospheric Mantle Indian Indentor",
         "shape": indentorshapes[2],
-        "viscosity": 1e5 * refViscosity,
-        "cohesion": 400.0 * u.megapascal,
+        "viscosity": 1e3 * refViscosity,
+        "cohesion": 350.0 * u.megapascal,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":3200.*u.kilogram / u.meter**3,
@@ -722,7 +722,7 @@ modelMaterials = [
     {
         "name": "Lithospheric Mantle Indian Indentor",
         "shape": indentorshapes[3],
-        "viscosity": 5e4 * refViscosity,
+        "viscosity": 5e1 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
         "density": 3220.0 * u.kilogram / u.meter ** 3
         # "density":"deptDependent",
@@ -777,11 +777,11 @@ class QuanityEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-# if uw.rank() == 0:
-#     with open(outputDir + "/ModelMaterials.json", "w") as outfile:
-#         json.dump(modelMaterials, outfile, indent=1, sort_keys=True, cls=QuanityEncoder)
-#     with open(outputDir + "/ModelMaterials.pkl", "wb") as outfile:
-#         pickle.dump(modelMaterials, outfile)
+if uw.rank() == 0:
+    with open(outputDir + "/ModelMaterials.json", "w") as outfile:
+        json.dump(modelMaterials, outfile, indent=1, sort_keys=True, cls=QuanityEncoder)
+    with open(outputDir + "/ModelMaterials.pkl", "wb") as outfile:
+        pickle.dump(modelMaterials, outfile)
 
 
 # figSize = (1800, 700)  # Chota ;)
@@ -822,7 +822,7 @@ figParticle.objects[0].colourBar["binlabels"] = True
 figParticle.objects[0].colourBar["size"] = [0.8, 0.02]
 if restartFlag is False:
     figParticle.save(outputDir + "/Particles_Initial")
-exit()
+
 # figParticle.show()
 
 # WIP! check for the scaling of the exponent
@@ -1249,8 +1249,8 @@ while step < maxSteps:
 
     if uw.rank() == 0:
         print("Stokes Solver Started...")
-    # ntol = 1e-5 if step == 0 else 1e-3
-    ntol = 1e-2
+    ntol = 1e-5 if step == 0 else 1e-3
+    # ntol = 1e-2
     solver.solve(
         nonLinearIterate=True,
         nonLinearTolerance=ntol,

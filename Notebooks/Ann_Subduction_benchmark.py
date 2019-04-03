@@ -20,13 +20,14 @@ wholeMantleFlag = False
 airLayer = True
 gldbFlag = False
 # restartFlag = True
-outputDirName = "AnnSubBenchmark_SA_Lo_dot001"
+outputDirName = "AnnSubBenchmark_SA_Lo_dot001_T3"
 # outputDirName = "T_SA_Lo_dot001"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.mpi.rank == 0:
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
+uw.mpi.barrier()
 checkpointedSteps = np.sort(
     np.unique(
         np.array(
@@ -281,6 +282,34 @@ thetaFn = fn.math.atan2(fn.coord()[1], fn.coord()[0])
 
 
 # thetaFn.evaluate()
+class LayerCircle(fn.Function):
+    """Layer Circle"""
+
+    def __init__(self, c1, c2, r1, r2):
+        """Create an Layer with two Circles
+        Parameters
+        ----------
+        c1 : center of Internal Circle
+        c2 : center of External Circle
+        r1 : Internal radius
+        r2 : External radius
+        Returns
+        -------
+        An Underworld function(fn) object
+        """
+        self.r1 = r1
+        self.r2 = r2
+
+        coord1 = fn.input() - c1
+        coord2 = fn.input() - c2
+        self._fn = (fn.math.dot(coord2, coord2) < r2 ** 2) & (
+            fn.math.dot(coord1, coord1) > r1 ** 2
+        )
+        super(LayerCircle, self).__init__(argument_fns=None)
+        self._fncself = self._fn._fncself
+
+
+# SHIT GETS REAL HERE
 
 if restartFlag is False:
 
@@ -296,24 +325,43 @@ if restartFlag is False:
         )
         & (mesh.thetaFn.evaluate(swarm.data) <= np.pi / 2)
     )
-    perturb = (
-        (mesh.unit_heightFn.evaluate(swarm.data) < nd(modelHeight - airHeight))
-        & (
-            mesh.unit_heightFn.evaluate(swarm.data)
-            > nd(modelHeight - airHeight - 200.0 * u.kilometer)
-        )
-        & (mesh.thetaFn.evaluate(swarm.data) <= np.pi / 2)
-        & (
-            mesh.thetaFn.evaluate(swarm.data)
-            >= np.pi / 2 - (100.0 * u.kilometer / earthRadius).magnitude
-        )
+    rp = nd(earthRadius - airHeight)
+    dip = 29
+    theta = 0
+    rE = nd(rp) / np.cos(np.deg2rad(dip))
+    cE = (
+        rp * np.tan(np.deg2rad(dip)) * -np.sin(np.deg2rad(theta - 90)),
+        rp * np.tan(np.deg2rad(dip)) * np.sin(np.deg2rad(theta)),
     )
+    rp = nd(earthRadius - 100.0 * u.kilometer - airHeight)
+    dip = 29
+    theta = 0
+    rI = nd(rp) / np.cos(np.deg2rad(dip))
+    cI = (
+        rp * np.tan(np.deg2rad(dip)) * -np.sin(np.deg2rad(theta - 90)),
+        rp * np.tan(np.deg2rad(dip)) * np.sin(np.deg2rad(theta)),
+    )
+    perturb = (LayerCircle(cI, cE, rI, rE).evaluate(swarm)) & (
+        mesh.thetaFn.evaluate(swarm) < np.deg2rad(92.1)
+    )
+    # perturb = (
+    #     (mesh.unit_heightFn.evaluate(swarm.data) < nd(modelHeight - airHeight))
+    #     & (
+    #         mesh.unit_heightFn.evaluate(swarm.data)
+    #         > nd(modelHeight - airHeight - 200.0 * u.kilometer)
+    #     )
+    #     & (mesh.thetaFn.evaluate(swarm.data) <= np.pi / 2)
+    #     & (
+    #         mesh.thetaFn.evaluate(swarm.data)
+    #         >= np.pi / 2 - (100.0 * u.kilometer / earthRadius).magnitude
+    #     )
+    # )
 
     materialVariable.data[:] = 1
-    materialVariable.data[air] = 0
     materialVariable.data[lowermantle] = 2
     materialVariable.data[slab | perturb] = 3
-
+    materialVariable.data[air] = 0  # best at last
+# SHIT GETS OKAY AGAIN
 
 figP = glucifer.Figure(store=store, figsize=(1200, 450))
 # fig.append( glucifer.objects.Mesh( mesh))
@@ -384,8 +432,8 @@ if restartFlag is False:
     figVdot.save(outputDir + "/Vdot" + str(step).zfill(5))
 
 airDensity = 0.0
-mantleDensity = 0.001
-slabDensity = 1.001
+mantleDensity = 0.000  # shit went crazy again
+slabDensity = 1.00
 densityMap = {0: airDensity, 1: mantleDensity, 2: mantleDensity, 3: slabDensity}
 densityFn = fn.branching.map(fn_key=materialVariable, mapping=densityMap)
 buoyancyFn = -1.0 * densityFn * mesh.unitvec_r_Fn
@@ -407,7 +455,7 @@ figbuoyancy.Points(
 if restartFlag is False:
     figbuoyancy.save(outputDir + "/BfnDot")
 
-airViscosity = 1e-2
+airViscosity = 1.0  # This is Lekker!
 mantleViscosity = 1.0
 lowermantleViscosity = 1e2
 slabViscosity = 1e2
