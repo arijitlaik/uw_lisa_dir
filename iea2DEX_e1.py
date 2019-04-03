@@ -874,7 +874,7 @@ figViscosityMesh.Surface(
     projVisc,
     logScale=True,
     onMesh=True,
-    valueRange=[1.0, 1e4],
+    valueRange=[0.1, 1e4],
     colours=coldmorning.cm_data,
     # valueRange=viscRange,
     # colours=vlike.cm_data,
