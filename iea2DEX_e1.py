@@ -131,7 +131,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 3  # 64 being the base vRes
+resMult = 8  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -805,7 +805,9 @@ if restartFlag is True:
 
 # store = glucifer.Store(outputDir+'/ieaHR')
 store = None
-figParticle = glucifer.Figure(store, figsize=(3200, 400), name="Materials")
+figParticle = glucifer.Figure(
+    store, figsize=figSize, name="Materials", boundingBox=bBox
+)
 
 tab20 = list(glucifer.lavavu.matplotlib_colourmap("tab20")[0 : len(modelMaterials) - 1])
 len(tab20)
