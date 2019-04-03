@@ -71,9 +71,9 @@ else:
     step = 0
     sTime = 0
 
-maxSteps = step + 3000
-imSteps = 4
-cpSteps = 50
+maxSteps = step + 4000
+imSteps = 25
+cpSteps = 25
 trSteps = 5
 
 
@@ -1264,7 +1264,7 @@ while step < maxSteps:
     time, step, dt = model_update()
     dmTime = dm(time, 1.0 * u.megayear).magnitude
 
-    if step % imSteps == 1 or step == maxSteps - 1:
+    if step % imSteps == 0 or step == maxSteps - 1 or step in (1, 2, 3, 4, 5):
         output_figures(step)
 
     if uw.rank() == 0:
