@@ -71,7 +71,7 @@ else:
     step = 0
     sTime = 0
 
-maxSteps = step + 4000
+maxSteps = step + 6000
 imSteps = 25
 cpSteps = 25
 trSteps = 5
@@ -1061,15 +1061,15 @@ if restartFlag is False:
 #     figPressure.save()
 
 viscStress = 2.0 * viscosityMapFn * strainRate
-figStress = glucifer.Figure(store, name="Stress", figsize=figSize, quality=3)
-figStress.append(
-    glucifer.objects.Points(
-        swarm,
-        2.0 * viscosityMapFn * strainRate_2ndInvariant,
-        pointSize=2,
-        logScale=True,
-    )
-)
+# figStress = glucifer.Figure(store, name="Stress", figsize=figSize, quality=3)
+# figStress.append(
+#     glucifer.objects.Points(
+#         swarm,
+#         2.0 * viscosityMapFn * strainRate_2ndInvariant,
+#         pointSize=2,
+#         logScale=True,
+#     )
+# )
 
 
 top = mesh.specialSets["MaxJ_VertexSet"]
@@ -1118,7 +1118,7 @@ def output_figures(step):
     figStrainRate.save(outputDir + "strainRate" + str(step).zfill(5))
     figDensity.save_image(outputDir + "density" + str(step).zfill(5))
     # figViscosity.save_image(outputDir + "viscosity" + str(step).zfill(5))
-    figStress.save(outputDir + "stress" + str(step).zfill(5))
+    # figStress.save(outputDir + "stress" + str(step).zfill(5))
     # figStressXX.save(outputDir + "Stress_XX" + str(step).zfill(4))
     # # figPressure.save(outputDir + "pressure" + str(step).zfill(4))
     #
