@@ -131,7 +131,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 2  # 64 being the base vRes
+resMult = 8  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -143,7 +143,7 @@ refineVert = True
 refInt = [1 / (resMult * 1e2), 1 / (resMult * 2e2)]
 refRange = [0.6, -0.125]
 refARx = [0.75, 0.25]
-time = nd(sTime * u.megayear)
+time = sTime
 dt = 0.0
 # CFL = 0.1*refInt[1]*yRes
 CFL = 1.0
@@ -1027,7 +1027,7 @@ vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    # valueRange=[0, 1e-3],
+    valueRange=[0, 5e-4],
     # logScale=True,
     colours=vlike.cm_data,
     # colours=tokyo.cm_data,
