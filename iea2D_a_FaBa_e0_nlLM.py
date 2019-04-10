@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "LR_a_DrhoLM00_FaBa_Ts_nlLM_15_NoPrCalib"
+outputDirName = "LR_a_DrhoLM00_FaBa_Ts_nlLM_13_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -660,7 +660,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": power_visc(3.5, nd(1e-15 / u.second)),
+        "eta0": power_visc(3.5, nd(1e-13 / u.second)),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -989,7 +989,7 @@ else:
     solver.set_inner_method("mumps")
 
 # solver.options.scr.ksp_type = "cg"
-solver.set_penalty(1e5)
+solver.set_penalty(1e6)
 
 # solver.options.main.remove_checkerboard_pressure_null_space = True
 
@@ -1284,7 +1284,7 @@ while step < maxSteps:
     solver.solve(
         nonLinearIterate=True,
         nonLinearTolerance=ntol,
-        # callback_post_solve=pressure_calibrate,
+        callback_post_solve=pressure_calibrate,
     )
 
     Vrms = np.sqrt(mesh.integrate(vdotv)[0] / mesh.integrate(1.0)[0])
