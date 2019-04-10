@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "LR_a_DrhoLM00_FaBa_Ts_nlLM_13_Pen"
+outputDirName = "18defSRInv_LR_a_DrhoLM00_FaBa_Ts_nlLM_15_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -626,7 +626,7 @@ strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
 def yield_visc(cohesion, viscosity):
     eII = strainRate_2ndInvariant
     etaVp = fn.exception.SafeMaths(
-        fn.misc.min(cohesion / (2.0 * (eII + nd(1e-15 / u.second))), viscosity)
+        fn.misc.min(cohesion / (2.0 * (eII + defaultSRInv)), viscosity)
     )
     return viscosity_limit(etaVp)
 
@@ -660,7 +660,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": power_visc(3.5, nd(1e-13 / u.second)),
+        "eta0": power_visc(3.5, nd(1e-15 / u.second)),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
