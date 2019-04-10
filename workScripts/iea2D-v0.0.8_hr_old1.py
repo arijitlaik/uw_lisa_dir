@@ -121,7 +121,7 @@ xRes
 refineHoriz = False
 refineVert = False
 
-time = nd(sTime * u.megayear)
+time = sTime 
 dt = 0.0
 CFL = 0.8
 

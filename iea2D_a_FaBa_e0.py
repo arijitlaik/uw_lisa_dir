@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "4x12_8-a_DrhoLM00_FaBa_Ts"
+outputDirName = "4x12_8-a_DrhoLM00_FaBa_Ts_Si"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -131,7 +131,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 8  # 64 being the base vRes
+resMult = 2  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -610,7 +610,7 @@ overRidingShapes = make_overRidingPlate2d(
 )
 
 # define the viscosity Range
-viscRange = [0.1, 1e5]
+viscRange = [1.0, 1e5]
 
 
 def viscosity_limit(viscosityFn, viscosityRange=viscRange):
@@ -1027,7 +1027,7 @@ vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    valueRange=[0, 5e-4],
+    valueRange=[0, 2e-4],
     # logScale=True,
     colours=vlike.cm_data,
     # colours=tokyo.cm_data,

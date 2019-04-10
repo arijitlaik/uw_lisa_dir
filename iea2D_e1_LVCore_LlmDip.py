@@ -143,7 +143,7 @@ refineVert = True
 refInt = [1 / (resMult * 1e2), 1 / (resMult * 1e2)]
 refRange = [0.5, -0.25]
 
-time = nd(sTime * u.megayear)
+time = sTime 
 dt = 0.0
 # CFL = 0.1*refInt[1]*yRes
 CFL = 1.0
@@ -943,7 +943,7 @@ vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    # valueRange=[0, 1e-3],
+    # valueRange=[0, 2e-4],
     # logScale=True,
     colours=vlike.cm_data,
     # colours=tokyo.cm_data,

@@ -142,7 +142,7 @@ refineVert = True
 refInt = [0.00175, 0.00175]
 refRange = [0.5, -0.25]
 
-time = nd(sTime * u.megayear)
+time = sTime 
 dt = 0.0
 # CFL = 0.1*refInt[1]*yRes
 CFL = 1.0
