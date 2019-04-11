@@ -16,10 +16,10 @@ from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
 import glucifer
 
 # import colorcet as cc
+
 # import tokyo
 import numpy as np
 from colorMaps import coldmorning as coldmorning
-from colorMaps import vlike as vlike
 
 import pickle
 import json
@@ -31,9 +31,8 @@ import datetime
 #
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
-# outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "18defSRInv_LR_a_DrhoLM00_FaBa_Ts_nlLM_15_Pen"
-
+outputDirName = "4x12_8-00175_DrhoLM30"
+# outputDirName = "tea2"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
     if not os.path.exists(outputDir):
@@ -71,9 +70,9 @@ else:
     step = 0
     sTime = 0
 
-maxSteps = step + 6000
+maxSteps = step + 3000
 imSteps = 25
-cpSteps = 25
+cpSteps = 50
 trSteps = 5
 
 
@@ -140,10 +139,10 @@ refineHoriz = True
 refineVert = True
 # refineHoriz = False
 # refineVert = False
-refInt = [1 / (resMult * 1e2), 1 / (resMult * 2e2)]
-refRange = [0.6, -0.125]
-refARx = [0.75, 0.25]
-time = sTime
+refInt = [1 / (resMult * 1e2), 1 / (resMult * 1e2)]
+refRange = [0.5, -0.25]
+
+time = nd(sTime * u.megayear)
 dt = 0.0
 # CFL = 0.1*refInt[1]*yRes
 CFL = 1.0
@@ -181,9 +180,7 @@ figSize = (1600 * 2, int(1600 / aRatioCoor) * 2 + 110)
 
 # setupStore = glucifer.Store(outputDir+"/setup")
 setupStore = None
-figMesh = glucifer.Figure(
-    store=setupStore, figsize=figSize, quality=3, boundingBox=bBox
-)
+figMesh = glucifer.Figure(store=setupStore, figsize=figSize, quality=3)
 figMesh.Mesh(mesh)
 # # figMesh.save()
 figMesh.save(outputDir + "/MeshInit2.png")
@@ -192,45 +189,22 @@ if restartFlag is False:
     if uw.rank() == 0:
         print("Deforming Mesh.....!")
 
-    # if refineHoriz:
-    #     xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
-    #     cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
-    #     xL = np.arange(cenX, cenX + refRange[0] / 2.0, refInt[0])
-    #     xG = np.geomspace(
-    #         cenX + refRange[0] / 2,
-    #         mesh.maxCoord[0],
-    #         mesh.elementRes[0] / 2.0 - xL.size + 1,
-    #     )
-    #     # xG = np.linspace(
-    #     #     cenX + refRange[0]/2, mesh.maxCoord[0], mesh.elementRes[0]/2. - xL.size+1)
-    #     assert mesh.elementRes[0] / 2 - (xL.size + xG.size) == -1
-    #     xR = np.concatenate((xL, xG), axis=0)
-    #     xrF = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xR, axis=0)
-    #     xR = np.concatenate((xrF, xR), axis=0)
-    #     xR = np.delete(xR, xR.size / 2)
-    #     assert mesh.elementRes[0] + 1 - xR.size == 0
     if refineHoriz:
         xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
         cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
-        xL = np.arange(cenX, cenX + refRange[0] * refARx[1], refInt[0])
+        xL = np.arange(cenX, cenX + refRange[0] / 2.0, refInt[0])
         xG = np.geomspace(
-            cenX + refRange[0] * refARx[1],
+            cenX + refRange[0] / 2,
             mesh.maxCoord[0],
             mesh.elementRes[0] / 2.0 - xL.size + 1,
         )
-        xLL = np.arange(cenX - refRange[0] * refARx[0], cenX, refInt[0])
-        xGG = np.geomspace(
-            cenX + refRange[0] * refARx[0],
-            mesh.maxCoord[0],
-            mesh.elementRes[0] / 2.0 - xLL.size + 1,
-        )
-        xGG = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xGG, axis=0)
-        xGG = np.delete(xGG, -1)
-
+        # xG = np.linspace(
+        #     cenX + refRange[0]/2, mesh.maxCoord[0], mesh.elementRes[0]/2. - xL.size+1)
         assert mesh.elementRes[0] / 2 - (xL.size + xG.size) == -1
         xR = np.concatenate((xL, xG), axis=0)
-        xRR = np.concatenate((xGG, xLL), axis=0)
-        xR = np.concatenate((xRR, xR), axis=0)
+        xrF = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xR, axis=0)
+        xR = np.concatenate((xrF, xR), axis=0)
+        xR = np.delete(xR, xR.size / 2)
         assert mesh.elementRes[0] + 1 - xR.size == 0
 
     if refineVert:
@@ -527,34 +501,6 @@ mantleShape = make_layer2d(
     # thicknessArray=[nd(660.*u.kilometer), nd(modelHeight-660.*u.kilometer)]
 )
 
-# slabshapes = make_slab2d(
-#     topX=nd(0.3 * modelHeight),
-#     topY=0.0,
-#     length=nd(1.7 * modelHeight),
-#     taper=12,
-#     dip=29,
-#     depth=nd(120.0 * u.kilometer),
-#     thicknessArray=[
-#         nd(15.0 * u.kilometer),
-#         nd(15.0 * u.kilometer),
-#         nd(30.0 * u.kilometer),
-#         nd(30.0 * u.kilometer),
-#     ],  # thic # 10 20 20 30
-# )
-#
-# indentorshapes = make_Indentor2d(
-#     startX=nd(0.3 * modelHeight),
-#     topY=nd(0.0 * u.kilometer),
-#     length=nd(0.85 * modelHeight),
-#     taper=18,
-#     thicknessArray=[
-#         nd(20.0 * u.kilometer),
-#         nd(20.0 * u.kilometer),
-#         nd(30.0 * u.kilometer),
-#         nd(40.0 * u.kilometer),
-#     ],  # UL
-#     taper2=12,
-# )
 slabshapes = make_slab2d(
     topX=nd(0.725 * modelHeight),
     topY=0.0,
@@ -590,27 +536,20 @@ overRidingShapesForeArc = make_overRidingPlate2d(
     length=-nd(2.0 * modelHeight),
     taper=90,
     dip=29,
-    thicknessArray=[nd(30.0 * u.kilometer), nd(30.0 * u.kilometer)],
+    thicknessArray=[nd(40.0 * u.kilometer), nd(80.0 * u.kilometer)],
 )
-overRidingShapesBackArc = make_overRidingPlate2d(
-    topX=mesh.maxCoord[0] - mesh.minCoord[0],
-    topY=nd(0.0 * u.kilometer),
-    length=-nd((2.0 - 0.075) * modelHeight),
-    taper=90,
-    dip=90,
-    thicknessArray=[nd(30.0 * u.kilometer), nd(30.0 * u.kilometer)],
-)
+
 overRidingShapes = make_overRidingPlate2d(
     topX=mesh.maxCoord[0] - mesh.minCoord[0],
     topY=nd(0.0 * u.kilometer),
-    length=-nd((2.0 - 0.25) * modelHeight),
+    length=nd(-1.875 * modelHeight),
     taper=90,
-    dip=17,
+    dip=90,
     thicknessArray=[nd(40.0 * u.kilometer), nd(80.0 * u.kilometer)],
 )
 
 # define the viscosity Range
-viscRange = [1e-1, 1e5]
+viscRange = [1.0, 1e5]
 
 
 def viscosity_limit(viscosityFn, viscosityRange=viscRange):
@@ -629,14 +568,6 @@ def yield_visc(cohesion, viscosity):
         fn.misc.min(cohesion / (2.0 * (eII + defaultSRInv)), viscosity)
     )
     return viscosity_limit(etaVp)
-
-
-def power_visc(n, refSRInv):
-    return viscosity_limit(
-        np.power(strainRate_2ndInvariant / refSRInv, ((1.0 - n) / n)),
-        # (A ** (-1 / n)) * (strainRate_2ndInvariant + defaultSRInv) ** ((1.0 - n) / n),
-        [0.1, 1.0],
-    )
 
 
 # depthViscosityfn = fn.branching.conditional([(fn.coord()[1] > nd(-660.*u.kilometer), 1.), (True, 1e2)])
@@ -660,12 +591,12 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": power_visc(3.5, nd(1e-15 / u.second)),
+        "eta0": refViscosity,
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
         "rho0": 3200.0 * u.kilogram / u.meter ** 3,
-        "rho1": 3200.0 * u.kilogram / u.meter ** 3,
+        "rho1": 3230.0 * u.kilogram / u.meter ** 3,
         "rhoChangeDepth": 660.0 * u.kilometer,
     },
     # {"name": 'Upper Mantle',
@@ -772,44 +703,32 @@ modelMaterials = [
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
-        "name": "Crust Eurasian Plate BackArc",
-        "shape": overRidingShapesBackArc[0],
-        "viscosity": 2.5e2 * refViscosity,
-        "density": 3200.0 * u.kilogram / u.meter ** 3,
-    },
-    {
-        "name": "Lithospheric Mantle Eurasian Plate BackArc",
-        "shape": overRidingShapesBackArc[1],
-        "viscosity": 1.25e2 * refViscosity,
-        "density": 3200.0 * u.kilogram / u.meter ** 3,
-    },
-    {
         "name": "Crust Eurasian Plate",
         "shape": overRidingShapes[0],
-        "viscosity": 2e3 * refViscosity,
+        "viscosity": 5e2 * refViscosity,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate",
         "shape": overRidingShapes[1],
-        "viscosity": 1e3 * refViscosity,
+        "viscosity": 2e2 * refViscosity,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
 ]
 
-#
-# class QuanityEncoder(json.JSONEncoder):
-#     def default(self, obj):
-#         if isinstance(obj, u.Quantity):
-#             return str(obj)
-#         return json.JSONEncoder.default(self, obj)
-#
-#
-# if uw.rank() == 0:
-#     with open(outputDir + "/ModelMaterials.json", "w") as outfile:
-#         json.dump(modelMaterials, outfile, indent=1, sort_keys=True, cls=QuanityEncoder)
-#     with open(outputDir + "/ModelMaterials.pkl", "wb") as outfile:
-#         pickle.dump(modelMaterials, outfile)
+
+class QuanityEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, u.Quantity):
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
+if uw.rank() == 0:
+    with open(outputDir + "/ModelMaterials.json", "w") as outfile:
+        json.dump(modelMaterials, outfile, indent=1, sort_keys=True, cls=QuanityEncoder)
+    with open(outputDir + "/ModelMaterials.pkl", "wb") as outfile:
+        pickle.dump(modelMaterials, outfile)
 
 
 # figSize = (1800, 700)  # Chota ;)
@@ -836,15 +755,12 @@ store = None
 figParticle = glucifer.Figure(
     store, figsize=figSize, name="Materials", boundingBox=bBox
 )
-
-tab20 = list(glucifer.lavavu.matplotlib_colourmap("tab20")[0 : len(modelMaterials) - 1])
-len(tab20)
 figParticle.Points(
     swarm,
     materialVariable,
     pointsize=1.9,
     discrete=True,
-    colours=tab20,
+    colours="paired",
     fn_mask=materialVariable > 0,
     valueRange=[1, len(modelMaterials) - 1],
 )
@@ -852,7 +768,6 @@ figParticle.objects[0].colourBar["binlabels"] = True
 figParticle.objects[0].colourBar["size"] = [0.8, 0.02]
 if restartFlag is False:
     figParticle.save(outputDir + "/Particles_Initial")
-
 # figParticle.show()
 
 # WIP! check for the scaling of the exponent
@@ -912,7 +827,7 @@ figViscosityMesh.Surface(
 # colours="Cyan Green ForestGreen Grey Orange Brown Blue Black")
 # figViscosityMesh.Mesh(mesh)
 
-figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-1, 4, 6).tolist()
+figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-2, 4, 7).tolist()
 if restartFlag is False:
     figViscosityMesh.save(outputDir + "/ViscosityMesh_Initial_3")
 
@@ -965,7 +880,7 @@ figbuoyancy.Points(
     swarm,
     densityFn * nd(gravity),
     pointsize=3,
-    colours="Black Blue (0.00)white ForestGreen Red"
+    colours="Black Blue (0.00)white Green Red"
     # colours=list(glucifer.lavavu.matplotlib_colourmap("Accent")),
 )
 figbuoyancy.objects[0].colourBar["tickvalues"] = [-5, -0.25, 0.0, 0.25, 0.5, 1]
@@ -989,7 +904,7 @@ else:
     solver.set_inner_method("mumps")
 
 # solver.options.scr.ksp_type = "cg"
-solver.set_penalty(1e6)
+solver.set_penalty(1e5)
 
 # solver.options.main.remove_checkerboard_pressure_null_space = True
 
@@ -1023,13 +938,12 @@ advector = uw.systems.SwarmAdvector(swarm=swarm, velocityField=velocityField, or
 vdotv = fn.math.dot(velocityField, velocityField)
 figVelocityMag = glucifer.Figure(store, figsize=figSize, name="Velocity Magnitude")
 # tokyo.cm_data.reverse()
-vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    valueRange=[0, 2e-4],
+    valueRange=[0, 1e-3],
     # logScale=True,
-    colours=vlike.cm_data,
+    colours=glucifer.lavavu.matplotlib_colourmap("plasma_r"),
     # colours=tokyo.cm_data,
     onMesh=True,
 )
@@ -1061,16 +975,14 @@ if restartFlag is False:
 #     figPressure.save()
 
 viscStress = 2.0 * viscosityMapFn * strainRate
-# figStress = glucifer.Figure(store, name="Stress", figsize=figSize, quality=3)
-# figStress.append(
-#     glucifer.objects.Points(
-#         swarm,
-#         2.0 * viscosityMapFn * strainRate_2ndInvariant,
-#         pointSize=2,
-#         logScale=True,
-#     )
-# )
-
+# figStress = glucifer.Figure(store, name="Stress", figsize=figSize,quality=3)
+# figStress.append(glucifer.objects.Points(
+#     swarm, 2.0*viscosityMapFn*strainRate_2ndInvariant, pointSize=2, logScale=True))
+# figStressXX = glucifer.Figure(
+#     store, name="Stress_XX", figsize=figSize, quality=3)
+# figStressXX.append(glucifer.objects.Points(
+#     swarm, viscStress[0], pointsize=2, colours='spectral'))
+# figStress.save()
 
 top = mesh.specialSets["MaxJ_VertexSet"]
 surfaceArea = uw.utils.Integral(
@@ -1118,7 +1030,7 @@ def output_figures(step):
     figStrainRate.save(outputDir + "strainRate" + str(step).zfill(5))
     figDensity.save_image(outputDir + "density" + str(step).zfill(5))
     # figViscosity.save_image(outputDir + "viscosity" + str(step).zfill(5))
-    # figStress.save(outputDir + "stress" + str(step).zfill(5))
+    # # figStress.save(outputDir + "stress" + str(step).zfill(4))
     # figStressXX.save(outputDir + "Stress_XX" + str(step).zfill(4))
     # # figPressure.save(outputDir + "pressure" + str(step).zfill(4))
     #
@@ -1239,7 +1151,7 @@ else:
     tincord.data[:] = tracerSwarm.particleCoordinates.data[:]
 uw.barrier()
 # f = glucifer.Figure(figsize=figSize)
-# f.Points(tracerSwarm, pointsize=4)
+# f.Points(tracerSwarm, tincord, pointsize=4)
 # f.save(outputDir + "/TracerInit")
 fieldDict = {
     "velocity": velocityField,
@@ -1280,7 +1192,6 @@ while step < maxSteps:
     if uw.rank() == 0:
         print("Stokes Solver Started...")
     ntol = 1e-5 if step == 0 else 1e-3
-    # ntol = 1e-2
     solver.solve(
         nonLinearIterate=True,
         nonLinearTolerance=ntol,
@@ -1292,7 +1203,7 @@ while step < maxSteps:
     time, step, dt = model_update()
     dmTime = dm(time, 1.0 * u.megayear).magnitude
 
-    if step % imSteps == 0 or step == maxSteps - 1 or step in (1, 2, 3, 4, 5):
+    if step % imSteps == 0 or step == maxSteps - 1:
         output_figures(step)
 
     if uw.rank() == 0:
@@ -1305,9 +1216,7 @@ while step < maxSteps:
         # print dt
         # print time
         if timingFlag:
-            uw.timing.print_table(
-                output_file=outputDir + "/uwTimer.log", display_fraction=0.999
-            )
+            uw.timing.print_table(output_file=outputDir + "/uwTimer.log")
             uw.timing.start()
 
         print(stepLog)
@@ -1352,11 +1261,6 @@ while step < maxSteps:
 
 if uw.rank() == 0:
     with open(outputDir + "/runLog.log", "a") as logfile:
-        logfile.write("\n===================================================\n")
-        logfile.write("\nTimestamp: {0} \n".format(datetime.datetime.now()))
-        logfile.write("\n***************************************************\n")
-
-# Scratch
-np.max(materialVariable.data[(swarm.data[:, 1] < -nd(660.0 * u.kilometer))])
-
-# end Scratch
+        logFile.write("\n===================================================\n")
+        logFile.write("\nTimestamp: {0} \n".format(datetime.datetime.now()))
+        logFile.write("\n***************************************************\n")
