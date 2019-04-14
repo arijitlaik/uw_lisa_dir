@@ -23,7 +23,7 @@ echo 'UW_VERSION: '$IMAGE_VERSION
 
 echo "********** Run Started **********"
 
-srun -n 24 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python  f_M_iea2D_a_FaBa_e0_nlLM.py
+srun -n 24 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python tOPiea2D_a_FaBa_e0_nlLM.py
 
 echo "********** XXXXXXXXXXX **********"
 

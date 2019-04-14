@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "4x12_8-a_DrhoLM00_FaBa_Ts"
+outputDirName = "18defSRInv_LR_a_DrhoLM00_FaBa_Ts_nlLM_2e15_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -131,7 +131,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 8  # 64 being the base vRes
+resMult = 4  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -143,7 +143,7 @@ refineVert = True
 refInt = [1 / (resMult * 1e2), 1 / (resMult * 2e2)]
 refRange = [0.6, -0.125]
 refARx = [0.75, 0.25]
-time = nd(sTime * u.megayear)
+time = sTime
 dt = 0.0
 # CFL = 0.1*refInt[1]*yRes
 CFL = 1.0
@@ -610,7 +610,7 @@ overRidingShapes = make_overRidingPlate2d(
 )
 
 # define the viscosity Range
-viscRange = [0.1, 1e5]
+viscRange = [1e-1, 1e5]
 
 
 def viscosity_limit(viscosityFn, viscosityRange=viscRange):
@@ -618,7 +618,7 @@ def viscosity_limit(viscosityFn, viscosityRange=viscRange):
 
 
 # the default strain rate Invariant used for the initial visc
-defaultSRInv = nd(1e-15 / u.second)
+defaultSRInv = nd(1e-18 / u.second)
 strainRate = fn.tensor.symmetric(velocityField.fn_gradient)
 strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
 
@@ -626,14 +626,14 @@ strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
 def yield_visc(cohesion, viscosity):
     eII = strainRate_2ndInvariant
     etaVp = fn.exception.SafeMaths(
-        fn.misc.min(cohesion / (2.0 * (eII + nd(1e-15 / u.second))), viscosity)
+        fn.misc.min(cohesion / (2.0 * (eII + defaultSRInv)), viscosity)
     )
     return viscosity_limit(etaVp)
 
 
-def power_visc(n):
+def power_visc(n, refSRInv):
     return viscosity_limit(
-        np.power(strainRate_2ndInvariant / defaultSRInv, ((1.0 - n) / n)),
+        np.power(strainRate_2ndInvariant / refSRInv, ((1.0 - n) / n)),
         # (A ** (-1 / n)) * (strainRate_2ndInvariant + defaultSRInv) ** ((1.0 - n) / n),
         [0.1, 1.0],
     )
@@ -660,7 +660,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": refViscosity,
+        "eta0": power_visc(3.5, nd(2e-15 / u.second)),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -797,19 +797,19 @@ modelMaterials = [
     },
 ]
 
-
-class QuanityEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, u.Quantity):
-            return str(obj)
-        return json.JSONEncoder.default(self, obj)
-
-
-if uw.rank() == 0:
-    with open(outputDir + "/ModelMaterials.json", "w") as outfile:
-        json.dump(modelMaterials, outfile, indent=1, sort_keys=True, cls=QuanityEncoder)
-    with open(outputDir + "/ModelMaterials.pkl", "wb") as outfile:
-        pickle.dump(modelMaterials, outfile)
+#
+# class QuanityEncoder(json.JSONEncoder):
+#     def default(self, obj):
+#         if isinstance(obj, u.Quantity):
+#             return str(obj)
+#         return json.JSONEncoder.default(self, obj)
+#
+#
+# if uw.rank() == 0:
+#     with open(outputDir + "/ModelMaterials.json", "w") as outfile:
+#         json.dump(modelMaterials, outfile, indent=1, sort_keys=True, cls=QuanityEncoder)
+#     with open(outputDir + "/ModelMaterials.pkl", "wb") as outfile:
+#         pickle.dump(modelMaterials, outfile)
 
 
 # figSize = (1800, 700)  # Chota ;)
@@ -989,7 +989,7 @@ else:
     solver.set_inner_method("mumps")
 
 # solver.options.scr.ksp_type = "cg"
-solver.set_penalty(1e5)
+solver.set_penalty(1e6)
 
 # solver.options.main.remove_checkerboard_pressure_null_space = True
 
@@ -1027,7 +1027,7 @@ vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    # valueRange=[0, 1e-3],
+    valueRange=[0, 2e-4],
     # logScale=True,
     colours=vlike.cm_data,
     # colours=tokyo.cm_data,

@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "18defSRInv_HR_a_DrhoLM00_FaBa_Ts_nlLM_15_Pen"
+outputDirName = "R8_a_DrhoLM00_FaBa_Ts_thinUC_nlLM_1e15_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -563,8 +563,8 @@ slabshapes = make_slab2d(
     dip=29,
     depth=nd(120.0 * u.kilometer),
     thicknessArray=[
-        nd(15.0 * u.kilometer),
-        nd(15.0 * u.kilometer),
+        nd(10.0 * u.kilometer),
+        nd(20.0 * u.kilometer),
         nd(30.0 * u.kilometer),
         nd(30.0 * u.kilometer),
     ],  # thic # 10 20 20 30
@@ -576,8 +576,8 @@ indentorshapes = make_Indentor2d(
     length=nd(0.85 * modelHeight),
     taper=18,
     thicknessArray=[
-        nd(15.0 * u.kilometer),
-        nd(15.0 * u.kilometer),
+        nd(10.0 * u.kilometer),
+        nd(20.0 * u.kilometer),
         nd(30.0 * u.kilometer),
         nd(30.0 * u.kilometer),
     ],  # UL
@@ -992,9 +992,9 @@ else:
 solver.set_penalty(1e6)
 
 # solver.options.main.remove_checkerboard_pressure_null_space = True
-
-solver.options.A11.ksp_rtol = 1e-4
-solver.options.scr.ksp_rtol = 1e-4
+#
+# solver.options.A11.ksp_rtol = 1e-4
+# solver.options.scr.ksp_rtol = 1e-4
 
 # solver.options.scr.use_previous_guess = True
 # solver.options.scr.ksp_set_min_it_converge = 3
@@ -1027,7 +1027,7 @@ vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    valueRange=[0, 2e-4],
+    valueRange=[0, 1e-3],
     # logScale=True,
     colours=vlike.cm_data,
     # colours=tokyo.cm_data,
@@ -1045,7 +1045,7 @@ figStrainRate.Surface(
     colours=glucifer.lavavu.matplotlib_colourmap("viridis"),
     onMesh=True,
 )
-figStrainRate.objects[0].colourBar["tickvalues"] = [2e-6, 1e-5, 1e-4, 1e-3, 1e-2]
+figStrainRate.objects[0].colourBar["tickvalues"] = [1e-7, 1e-5, 1e-4, 1e-3, 1e-2]
 if restartFlag is False:
     figStrainRate.save()
 
@@ -1357,6 +1357,6 @@ if uw.rank() == 0:
         logfile.write("\n***************************************************\n")
 
 # Scratch
-np.max(materialVariable.data[(swarm.data[:, 1] < -nd(660.0 * u.kilometer))])
+# np.max(materialVariable.data[(swarm.data[:, 1] < -nd(660.0 * u.kilometer))])
 
 # end Scratch

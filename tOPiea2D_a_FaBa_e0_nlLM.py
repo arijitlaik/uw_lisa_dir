@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "18defSRInv_HR_a_DrhoLM00_FaBa_Ts_nlLM_15_Pen"
+outputDirName = "tOpLR_a_DrhoLM00_FaBa_Ts_nlLM_1e15_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -131,7 +131,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 8  # 64 being the base vRes
+resMult = 4  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -590,7 +590,7 @@ overRidingShapesForeArc = make_overRidingPlate2d(
     length=-nd(2.0 * modelHeight),
     taper=90,
     dip=29,
-    thicknessArray=[nd(30.0 * u.kilometer), nd(30.0 * u.kilometer)],
+    thicknessArray=[nd(40.0 * u.kilometer), nd(40.0 * u.kilometer)],
 )
 overRidingShapesBackArc = make_overRidingPlate2d(
     topX=mesh.maxCoord[0] - mesh.minCoord[0],
@@ -598,7 +598,7 @@ overRidingShapesBackArc = make_overRidingPlate2d(
     length=-nd((2.0 - 0.075) * modelHeight),
     taper=90,
     dip=90,
-    thicknessArray=[nd(30.0 * u.kilometer), nd(30.0 * u.kilometer)],
+    thicknessArray=[nd(40.0 * u.kilometer), nd(40.0 * u.kilometer)],
 )
 overRidingShapes = make_overRidingPlate2d(
     topX=mesh.maxCoord[0] - mesh.minCoord[0],

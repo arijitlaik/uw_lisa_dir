@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "18defSRInv_HR_a_DrhoLM00_FaBa_Ts_nlLM_15_Pen"
+outputDirName = "18defSRInv_LR_a_DrhoLM00_FaBa_Ts_thinUC_nlLM_1e15_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -131,7 +131,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 8  # 64 being the base vRes
+resMult = 4  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -563,8 +563,8 @@ slabshapes = make_slab2d(
     dip=29,
     depth=nd(120.0 * u.kilometer),
     thicknessArray=[
-        nd(15.0 * u.kilometer),
-        nd(15.0 * u.kilometer),
+        nd(10.0 * u.kilometer),
+        nd(20.0 * u.kilometer),
         nd(30.0 * u.kilometer),
         nd(30.0 * u.kilometer),
     ],  # thic # 10 20 20 30
@@ -576,8 +576,8 @@ indentorshapes = make_Indentor2d(
     length=nd(0.85 * modelHeight),
     taper=18,
     thicknessArray=[
-        nd(15.0 * u.kilometer),
-        nd(15.0 * u.kilometer),
+        nd(10.0 * u.kilometer),
+        nd(20.0 * u.kilometer),
         nd(30.0 * u.kilometer),
         nd(30.0 * u.kilometer),
     ],  # UL
