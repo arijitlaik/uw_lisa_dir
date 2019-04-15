@@ -651,7 +651,7 @@ def depthViscosityfn(viscosity0, viscosity1, depth, coordtype=None):
     )
 
 
-opViscFactor = 1.0
+opViscFactor = 0.5
 modelMaterials = [
     # {"name": "Air",
     #  "shape": mantleandAirShape[0],
@@ -763,37 +763,37 @@ modelMaterials = [
     {
         "name": "Crust Eurasian Plate ForeArc",
         "shape": overRidingShapesForeArc[0],
-        "viscosity": 1e3 * refViscosity,
+        "viscosity": 1e3 * refViscosity * opViscFactor,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate ForeArc",
         "shape": overRidingShapesForeArc[1],
-        "viscosity": 5e2 * refViscosity,
+        "viscosity": 5e2 * refViscosity * opViscFactor,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Crust Eurasian Plate BackArc",
         "shape": overRidingShapesBackArc[0],
-        "viscosity": 2.5e2 * refViscosity,
+        "viscosity": 2.5e2 * refViscosity * opViscFactor,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate BackArc",
         "shape": overRidingShapesBackArc[1],
-        "viscosity": 1.25e2 * refViscosity,
+        "viscosity": 1.25e2 * refViscosity * opViscFactor,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Crust Eurasian Plate",
         "shape": overRidingShapes[0],
-        "viscosity": 2e3 * refViscosity,
+        "viscosity": 2e3 * refViscosity * opViscFactor,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate",
         "shape": overRidingShapes[1],
-        "viscosity": 1e3 * refViscosity,
+        "viscosity": 1e3 * refViscosity * opViscFactor,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
 ]

@@ -47,6 +47,9 @@ eIIs = np.linspace(nd(1e-18*1./u.second), nd(1e-12*1./u.second))
 refEII = nd(1e-15*1./u.second)
 etas = powerLaw(eIIs, refEII, n)
 etas2 = powerLaw(eIIs, 1, n)
-%matplotlib
-plt.loglog(dm(etas,u.pascal * u.second),dm(eIIs,1./u.second))
-plt.loglog(dm(etas2,u.pascal * u.second),dm(eIIs,1./u.second))
+
+plt.loglog(dm(etas, u.pascal * u.second), dm(eIIs, 1./u.second))
+plt.loglog(dm(etas2, u.pascal * u.second), dm(eIIs, 1./u.second))
+plt.loglog(dm(powerLaw(eIIs+nd(1e-18*1./u.second), refEII, n),u.pascal * u.second), dm(eIIs, 1./u.second))
+#nd(1e-18*1./u.second)
+plt.loglog(dm(powerLaw(eIIs, nd(1e-13*1./u.second), n),u.pascal * u.second), dm(eIIs, 1./u.second))
