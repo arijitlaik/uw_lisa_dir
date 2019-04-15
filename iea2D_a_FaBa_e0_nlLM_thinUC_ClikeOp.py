@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "R8_a_DrhoLM00_WeakOP_FaBa_Ts_thinUC_nlLM_1e15_Pen"
+outputDirName = "R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -651,7 +651,7 @@ def depthViscosityfn(viscosity0, viscosity1, depth, coordtype=None):
     )
 
 
-opViscFactor = 0.5
+opViscFactor = 1.0
 modelMaterials = [
     # {"name": "Air",
     #  "shape": mantleandAirShape[0],
