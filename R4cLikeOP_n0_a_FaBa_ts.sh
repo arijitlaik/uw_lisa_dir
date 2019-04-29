@@ -1,9 +1,9 @@
 #!/bin/bash
 # SBATCH -p short
-#SBATCH --nodes=4
+#SBATCH --nodes=2
 # SBATCH --constraint=infiniband,avx2
 #SBATCH --constraint=infiniband
-#SBATCH --tasks-per-node 16
+#SBATCH --tasks-per-node 12
 #SBATCH --time=96:00:00
 
 echo "********** CPU-INFO **********"
@@ -23,8 +23,8 @@ echo 'UW_VERSION: '$IMAGE_VERSION
 
 echo "********** Run Started **********"
 
-srun -n 64 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python R16iea2D_a_FaBa_e0_nlLM_thinUC_ClikeOp.py
-
+srun -n 24 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python R4iea2D_a_FaBa_e0_nlLM_thinUC_ClikeOp.py
+										         
 echo "********** XXXXXXXXXXX **********"
 
 wait

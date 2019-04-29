@@ -651,6 +651,7 @@ def depthViscosityfn(viscosity0, viscosity1, depth, coordtype=None):
     )
 
 
+opViscFactor = 1.0
 modelMaterials = [
     # {"name": "Air",
     #  "shape": mantleandAirShape[0],

@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "18defSRInv_LR_a_DrhoLM00_FaBa_Ts_thinUC_nlLM_1e15_Pen"
+outputDirName = "R8_a_DrhoLM00_FaBa_Ts_thinUC_mLC_nlLM_2e15_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -131,7 +131,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 4  # 64 being the base vRes
+resMult = 8  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -660,7 +660,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": power_visc(3.5, nd(1e-15 / u.second)),
+        "eta0": power_visc(3.5, nd(2e-15 / u.second)),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -692,7 +692,7 @@ modelMaterials = [
         "name": "Lower Crust Indo-Australian Plate",
         "shape": slabshapes[1],
         "viscosity": 1e2 * refViscosity,
-        "cohesion": 30.0 * u.megapascal,
+        "cohesion": 24.0 * u.megapascal,
         "density": 3280.0 * u.kilogram / u.meter ** 3,
     },  # 5.*u.megapascal,
     {
@@ -729,7 +729,7 @@ modelMaterials = [
         "name": "Lower Crust Indian Indentor",
         "shape": indentorshapes[1],
         "viscosity": 1e2 * refViscosity,
-        "cohesion": 30.0 * u.megapascal,
+        "cohesion": 24.0 * u.megapascal,
         "density": 2800.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
@@ -992,9 +992,9 @@ else:
 solver.set_penalty(1e6)
 
 # solver.options.main.remove_checkerboard_pressure_null_space = True
-
-solver.options.A11.ksp_rtol = 1e-4
-solver.options.scr.ksp_rtol = 1e-4
+#
+# solver.options.A11.ksp_rtol = 1e-4
+# solver.options.scr.ksp_rtol = 1e-4
 
 # solver.options.scr.use_previous_guess = True
 # solver.options.scr.ksp_set_min_it_converge = 3
@@ -1027,7 +1027,7 @@ vlike.cm_data.reverse()
 figVelocityMag.Surface(
     mesh,
     fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    valueRange=[0, 2e-4],
+    valueRange=[0, 1e-3],
     # logScale=True,
     colours=vlike.cm_data,
     # colours=tokyo.cm_data,
@@ -1045,7 +1045,7 @@ figStrainRate.Surface(
     colours=glucifer.lavavu.matplotlib_colourmap("viridis"),
     onMesh=True,
 )
-figStrainRate.objects[0].colourBar["tickvalues"] = [2e-6, 1e-5, 1e-4, 1e-3, 1e-2]
+figStrainRate.objects[0].colourBar["tickvalues"] = [1e-7, 1e-5, 1e-4, 1e-3, 1e-2]
 if restartFlag is False:
     figStrainRate.save()
 
@@ -1357,6 +1357,6 @@ if uw.rank() == 0:
         logfile.write("\n***************************************************\n")
 
 # Scratch
-np.max(materialVariable.data[(swarm.data[:, 1] < -nd(660.0 * u.kilometer))])
+# np.max(materialVariable.data[(swarm.data[:, 1] < -nd(660.0 * u.kilometer))])
 
 # end Scratch
