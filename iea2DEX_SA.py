@@ -3,27 +3,25 @@
 
 # Good Old Imports
 
+import datetime
+import json
+import pickle
+from colorMaps import vlike as vlike
+from colorMaps import coldmorning as coldmorning
+import numpy as np
+import glucifer
+from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
+from underworld.scaling import units as u
+from underworld import function as fn
+import underworld as uw
 import os
 import sys
 
 os.environ["UW_ENABLE_TIMING"] = "1"
-import underworld as uw
-from underworld import function as fn
 
-from underworld.scaling import units as u
-from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
-
-import glucifer
 
 # import colorcet as cc
 # import tokyo
-import numpy as np
-from colorMaps import coldmorning as coldmorning
-from colorMaps import vlike as vlike
-
-import pickle
-import json
-import datetime
 
 
 #
@@ -32,7 +30,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "tea2_NU_SA_F"
+outputDirName = "R8_SA_Arithmetic_Vswar_comp1"
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
     if not os.path.exists(outputDir):
@@ -70,8 +68,8 @@ else:
     step = 0
     sTime = 0
 
-maxSteps = step + 3000
-imSteps = 4
+maxSteps = step + 1000
+imSteps = 1
 cpSteps = 50
 trSteps = 5
 
@@ -103,8 +101,8 @@ modelHeight = 2880.0 * u.kilometer
 if enableSA:
     stickyAirtHeight = modelHeight / 16.0
 # plateHeight = 120. * u.kilometer
-refDensity = 3200.0 * u.kilogram / u.meter ** 3
-deltaRhoMax = 80.0 * u.kilogram / u.meter ** 3
+refDensity = 0.0 * u.kilogram / u.meter ** 3
+deltaRhoMax = 3280.0 * u.kilogram / u.meter ** 3
 gravity = 9.8 * u.metre / u.second ** 2
 # 1.57e20 * u.pascal * u.second 5.e20 * u.pascal * u.second
 refViscosity = 5.0e20 * u.pascal * u.second
@@ -133,9 +131,9 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 vRes = 64
 if enableSA:
     vRes = 64 + 2 * 64 * stickyAirtHeight / modelHeight
-vRes
-resMult = 2  # 64 being the base vRes
-aRatioMesh = 2  # xRes/yRes
+# vRes
+resMult = 8  # 64 being the base vRes
+aRatioMesh = 4  # xRes/yRes
 if enableSA:
     aRatioMesh = 1.6
 aRatioCoor = 4  # Model len ratio
@@ -155,7 +153,7 @@ if enableSA:
     refRange[1] = refRange[1] - (stickyAirtHeight / modelHeight).magnitude
 
 refARx = [0.75, 0.25]
-time = sTime 
+time = sTime
 dt = 0.0
 # CFL = 0.1*refInt[1]*yRes
 CFL = 1.0
@@ -191,7 +189,7 @@ mesh = uw.mesh.FeMesh_Cartesian(
 )
 
 bBox = ((mesh.minCoord[0], mesh.minCoord[1]), (mesh.maxCoord[0], mesh.maxCoord[1]))
-figSize = (1600 * 2, int(1600 / aRatioCoor) * 2 + 110)
+figSize = (1600 * 2, int(1600 / aRatioCoor) * 2 + 150)
 # figSize = (1800, 600)
 
 # setupStore = glucifer.Store(outputDir+"/setup")
@@ -539,7 +537,7 @@ if enableSA:
         startX=0.0,
         topY=mesh.maxCoord[1],
         length=nd(modelHeight * aRatioCoor),
-        thicknessArray=[nd(stickyAirtHeight)],
+        thicknessArray=[0.6*nd(stickyAirtHeight), 0.4*nd(stickyAirtHeight)],
         # thicknessArray=[nd(660.*u.kilometer), nd(modelHeight-660.*u.kilometer)]
     )
 mantleShape = make_layer2d(
@@ -551,19 +549,20 @@ mantleShape = make_layer2d(
 )
 
 slabshapes = make_slab2d(
-    topX=nd(0.0 * modelHeight),
+    topX=nd(-0.01 * modelHeight),
     topY=0.0,
-    length=nd(2.0 * modelHeight),
+    length=nd(2.01 * modelHeight),
     taper=15,
     dip=29,
     depth=nd(120.0 * u.kilometer),
     thicknessArray=[
-        nd(15.0 * u.kilometer),
-        nd(15.0 * u.kilometer),
+        nd(10.0 * u.kilometer),
+        nd(20.0 * u.kilometer),
         nd(30.0 * u.kilometer),
         nd(30.0 * u.kilometer),
     ],  # thic # 10 20 20 30
 )
+
 
 indentorshapes = make_Indentor2d(
     startX=nd(0.3 * modelHeight),
@@ -617,7 +616,6 @@ defaultSRInv = nd(1e-18 / u.second)
 strainRate = fn.tensor.symmetric(velocityField.fn_gradient)
 strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
 
-
 def yield_visc(cohesion, viscosity):
     eII = strainRate_2ndInvariant
     etaVp = fn.exception.SafeMaths(
@@ -626,9 +624,9 @@ def yield_visc(cohesion, viscosity):
     return viscosity_limit(etaVp)
 
 
-def power_visc(n):
+def power_visc(n, refSRInv):
     return viscosity_limit(
-        np.power(strainRate_2ndInvariant / defaultSRInv, ((1.0 - n) / n)),
+        np.power(strainRate_2ndInvariant / refSRInv, ((1.0 - n) / n)),
         # (A ** (-1 / n)) * (strainRate_2ndInvariant + defaultSRInv) ** ((1.0 - n) / n),
         [0.1, 1.0],
     )
@@ -651,7 +649,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": 1 * refViscosity,
+        "eta0": power_visc(3.5, nd(1e-15 / u.second)),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -672,7 +670,7 @@ modelMaterials = [
         "name": "Uppper Crust Indo-Australian Plate",
         "shape": slabshapes[0],
         "viscosity": 1e2 * refViscosity,
-        "cohesion": 06.0 * u.megapascal,
+        "cohesion": 03.0 * u.megapascal,
         # "viscosity":"deptDependent",
         # "eta0":yield_visc(nd(06.*u.megapascal), nd(1e2*refViscosity)),
         # "eta1":yield_visc(nd(30.*u.megapascal), nd(5e1*refViscosity)),  # 5e1
@@ -709,8 +707,8 @@ modelMaterials = [
         # "eta1":yield_visc(nd(30.*u.megapascal), nd(5e1*refViscosity)),  # 5e1
         # "etaChangeDepth":150.*u.kilometer,
         "viscosity": 1e3 * refViscosity,
-        "cohesion": 06.0 * u.megapascal,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "cohesion": 03.0 * u.megapascal,
+        "density": 3280.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -788,13 +786,21 @@ modelMaterials = [
     },
 ]
 if enableSA:
-    air = {
-        "name": "Air",
+    stickyAir = {
+        "name": "StickyAir",
         "shape": airShape[0],
-        "viscosity": 0.1 * refViscosity,
+        "viscosity": 0.01 * refViscosity,
         "density": 0.0 * u.kilogram / u.meter ** 3,
     }
-    modelMaterials.insert(0, air)
+    compressedAir = {
+        "name": "StickyAir",
+        "shape": airShape[0],
+        "viscosity": 0.01 * refViscosity,
+        "density": 0.0 * u.kilogram / u.meter ** 3,
+        "oneOnLambda": 1.0e4,
+    }
+    modelMaterials.insert(0, compressedAir)
+    modelMaterials.insert(0, stickyAir)
 
 
 class QuanityEncoder(json.JSONEncoder):
@@ -886,30 +892,60 @@ viscosityMapFn = fn.branching.map(fn_key=materialVariable, mapping=viscosityMap)
 #     figViscosity.save(outputDir+figViscosity["title"])
 # figViscosity.save()
 
-projVisc = mesh.add_variable(1)
-projVisMesh = uw.utils.MeshVariable_Projection(projVisc, viscosityMapFn, type=0)
-projVisMesh.solve()
 
-# vlike.cm_data.reverse()
-figViscosityMesh = glucifer.Figure(store, figsize=figSize, name="Viscosity Map")
-figViscosityMesh.Surface(
+averagingDict = {
+    "arit": 1.0,
+    "geom": 1e-6,
+    "harm": -1.0,
+    "max": 5.0,
+    "min": -5.0,
+    "rms": 2.0,
+}
+
+averagingType = "arit"
+fnF = averagingDict[averagingType]
+
+projVisc = mesh.subMesh.add_variable(1)
+projVisMesh = uw.utils.MeshVariable_Projection(projVisc, viscosityMapFn ** fnF, type=0)
+projVisMesh.solve()
+averagedViscosity = projVisc ** (1.0 / fnF)  # or describe as uw fn
+projVisc.data[:] = projVisc.data[:] ** (1.0 / fnF)
+# print(averagedViscosity)
+figAvgViscosityMesh = glucifer.Figure(
+    store, figsize=figSize, name="Viscosity Map" + str(dm(time, u.megayear))
+)
+figAvgViscosityMesh.Surface(
     mesh,
-    projVisc,
+    averagedViscosity,
     logScale=True,
     onMesh=True,
-    valueRange=[0.1, 1e4],
+    valueRange=[0.01, 2e3],
     colours=coldmorning.cm_data,
     # valueRange=viscRange,
     # colours=vlike.cm_data,
     # colours=glucifer.lavavu.matplotlib_colourmap(
     #     "magma_r")
 )
-# colours="Cyan Green ForestGreen Grey Orange Brown Blue Black")
-# figViscosityMesh.Mesh(mesh)
-
-figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-1, 4, 6).tolist()
-if restartFlag is False:
-    figViscosityMesh.save(outputDir + "/ViscosityMesh_Initial_3")
+# # vlike.cm_data.reverse()
+# figViscosityMesh = glucifer.Figure(store, figsize=figSize, name="Viscosity Map")
+# figViscosityMesh.Surface(
+#     mesh,
+#     projVisc,
+#     logScale=True,
+#     onMesh=True,
+#     valueRange=[0.1, 1e4],
+#     colours=coldmorning.cm_data,
+#     # valueRange=viscRange,
+#     # colours=vlike.cm_data,
+#     # colours=glucifer.lavavu.matplotlib_colourmap(
+#     #     "magma_r")
+# )
+# # colours="Cyan Green ForestGreen Grey Orange Brown Blue Black")
+# # figViscosityMesh.Mesh(mesh)
+#
+# figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-1, 4, 6).tolist()
+# if restartFlag is False:
+#     figViscosityMesh.save(outputDir + "/ViscosityMesh_Initial_3")
 
 refDensity = 0.0 * u.kilogram / u.meter ** 3
 
@@ -935,8 +971,39 @@ densityMap = {
 densityFn = fn.branching.map(fn_key=materialVariable, mapping=densityMap)
 z_hat = (0.0, -1.0)
 buoyancyFn = densityFn * z_hat * nd(gravity)
-
 sf = dm(1.0, 1.0 * u.kilogram / u.meter ** 3)
+# projDensity = mesh.subMesh.add_variable(nodeDofCount=1, dataType="double")
+# projDensityMesh = uw.utils.MeshVariable_Projection(
+#     projDensity, densityFn ** fnF, type=0
+# )
+# projDensityMesh.solve()
+# averagedDensity = projDensity ** (1.0 / fnF)
+# projDensity.data[:] = projDensity.data[:] ** (1.0 / fnF)
+#
+# avgBuoyancyFn = averagedDensity * z_hat * nd(gravity)
+
+projDensity = mesh.subMesh.add_variable(1)
+projDensityMesh = uw.utils.MeshVariable_Projection(
+    projDensity, densityFn, type=0
+)
+projDensityMesh.solve()
+averagedDensity = projDensity
+# projDensity.data[:] = projDensity.data[:] ** (1.0 / fnF)
+
+avgBuoyancyFn = averagedDensity * z_hat * nd(gravity)
+
+figAvgDensity = glucifer.Figure(
+    store, figsize=figSize, title="Density Map" + str(dm(time, u.megayear))
+)
+figAvgDensity.Surface(
+    mesh,
+    averagedDensity * sf.magnitude + refDensity.magnitude,
+    valueRange=[2800, 3280],
+    colours="spectral",
+)
+
+figAvgDensity.objects[0].colourBar["tickvalues"] = [2800, 2900, 3000, 3100, 3200, 3280]
+
 
 figDensity = glucifer.Figure(
     store, figsize=figSize, name="Density Map", boundingBox=bBox
@@ -944,7 +1011,7 @@ figDensity = glucifer.Figure(
 figDensity.Points(
     swarm,
     densityFn * sf.magnitude + refDensity.magnitude,
-    valueRange=[2800, 3280],
+    # valueRange=[2800, 3280],
     fn_mask=materialVariable > 0,
     pointsize=1.9,
     colours="spectral",
@@ -967,13 +1034,24 @@ figbuoyancy.objects[0].colourBar["tickvalues"] = [-5, -0.25, 0.0, 0.25, 0.5, 1]
 if restartFlag is False:
     figbuoyancy.save(outputDir + "/figbuoyancy")
 
+
+oneOnLambdaMap = {
+    i: mat["oneOnLambda"]
+    if mat.get("oneOnLambda")
+    else 0.
+    for (i, mat) in enumerate(modelMaterials)
+    }
+oneOnLambdafn = fn.branching.map(fn_key=materialVariable, mapping=oneOnLambdaMap)
 stokes = uw.systems.Stokes(
     velocityField=velocityField,
     pressureField=pressureField,
     voronoi_swarm=swarm,
     conditions=[freeslipBC],
+    fn_one_on_lambda=oneOnLambdafn,
     fn_viscosity=viscosityMapFn,
     fn_bodyforce=buoyancyFn,
+    # fn_viscosity=averagedViscosity,
+    # fn_bodyforce=avgBuoyancyFn,
 )
 
 solver = uw.systems.Solver(stokes)
@@ -983,23 +1061,38 @@ if uw.nProcs() == 1:
 else:
     solver.set_inner_method("mumps")
 
-# solver.options.scr.ksp_type = "cg"
-solver.set_penalty(1e5)
+if stokes.fn_one_on_lambda is None:
+    solver.set_penalty(1e7)
+
+solver.options.A11.ksp_rtol = 1e-8
+solver.options.A11.ksp_set_min_it_converge = 10
+solver.options.A11.use_previous_guess = True
+solver.options.scr.ksp_rtol = 1e-6
+solver.options.scr.use_previous_guess = True
+solver.options.scr.ksp_set_min_it_converge = 10
+solver.options.scr.ksp_type = "cg"
+
+#solver.options.main.help = ""
+solver.options.main.remove_constant_pressure_null_space = True
+#solver.options.main.Q22_pc_type = "uwscale"
+solver.set_penalty(0)
+#Model.solver  solver
 
 # solver.options.main.remove_checkerboard_pressure_null_space = True
 
-solver.options.A11.ksp_rtol = 1e-4
-solver.options.scr.ksp_rtol = 1e-4
+# solver.options.A11.ksp_rtol = 1e-4
+# solver.options.scr.ksp_rtol = 1e-4
 
 # solver.options.scr.use_previous_guess = True
 # solver.options.scr.ksp_set_min_it_converge = 3
 
 # #Set more advanced solver option
-# solver.options.main.Q22_pc_type='gkgdiag'
+# solver.options.main.Q22_pc_type = 'gtkg'
 # # solver.options.A11.ksp_rtol=1e-2
 # # solver.options.scr.ksp_rtol=1e-3
-solver.options.A11.ksp_type = "cg"
-solver.options.scr.use_previous_guess = True
+# solver.options.A11.ksp_type = "cg"
+# solver.options.scr.ksp_type = "cg"
+# solver.options.scr.use_previous_guess = True
 # #solver.options.scr.ksp_set_min_it_converge = 1
 # #solver.options.main.penalty=10.0
 #
@@ -1089,6 +1182,9 @@ def smooth_pressure():
 
 
 def pressure_calibrate():
+    # projVisMesh.solve()
+    # projDensityMesh.solve()
+
     if uw.rank() == 0:
         print("Calibration and Smoothing of PressureField... ")
     (area,) = surfaceArea.evaluate()
@@ -1105,15 +1201,17 @@ def pressure_calibrate():
 
 def output_figures(step):
     # store.step = step
-    # figParticle.save(outputDir + "particle" + str(step).zfill(4))
-    projVisMesh.solve()
-    figViscosityMesh.save_image(outputDir + "viscosity" + str(step).zfill(5))
+    figParticle.save(outputDir + "particle" + str(step).zfill(4))
+    figAvgViscosityMesh.save_image(outputDir + "viscosity_A" + str(step).zfill(5))
+    # figViscosityMesh.save_image(outputDir + "viscosity" + str(step).zfill(5))
 
     figVelocityMag.save_image(outputDir + "velocityMag" + str(step).zfill(5))
     figStrainRate.save(outputDir + "strainRate" + str(step).zfill(5))
-    figDensity.save_image(outputDir + "density" + str(step).zfill(5))
+    # figDensity.save_image(outputDir + "density" + str(step).zfill(5))
+    figAvgDensity.save_image(outputDir + "density" + str(step).zfill(5))
+
     # figViscosity.save_image(outputDir + "viscosity" + str(step).zfill(5))
-    figStress.save(outputDir + "stress" + str(step).zfill(5))
+    # figStress.save(outputDir + "stress" + str(step).zfill(5))
     # figStressXX.save(outputDir + "Stress_XX" + str(step).zfill(4))
     # # figPressure.save(outputDir + "pressure" + str(step).zfill(4))
     #
@@ -1240,7 +1338,9 @@ uw.barrier()
 fieldDict = {
     "velocity": velocityField,
     "pressure": pressureField,
-    "meshViscosity": projVisc,
+    # "meshViscosity": projVisc,
+    "Viscosity": projVisc,
+    "Density": projDensity,
 }
 
 swarmDict = {"materials": materialVariable}
@@ -1277,10 +1377,12 @@ while step < maxSteps:
         print("Stokes Solver Started...")
     # ntol = 1e-5 if step == 0 else 1e-3
     ntol = 1e-2
+    projVisMesh.solve()
+    projDensityMesh.solve()
     solver.solve(
         nonLinearIterate=True,
         nonLinearTolerance=ntol,
-        callback_post_solve=pressure_calibrate,
+        # callback_post_solve=pressure_calibrate,
     )
 
     Vrms = np.sqrt(mesh.integrate(vdotv)[0] / mesh.integrate(1.0)[0])
@@ -1311,6 +1413,9 @@ while step < maxSteps:
         logFile.close()
     if step % cpSteps == 0 or step == 1:
         projVisMesh.solve()
+        projDensityMesh.solve()
+        projVisc.data[:] = projVisc.data[:] ** (1.0 / fnF)
+        projDensity.data[:] = projDensity.data[:] ** (1.0 / fnF)
         checkpoint(
             mesh,
             fieldDict,
