@@ -132,7 +132,7 @@ vRes = 64
 if enableSA:
     vRes = 64 + 2 * 64 * stickyAirtHeight / modelHeight
 # vRes
-resMult = 8  # 64 being the base vRes
+resMult = 8.889  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 if enableSA:
     aRatioMesh = 1.6

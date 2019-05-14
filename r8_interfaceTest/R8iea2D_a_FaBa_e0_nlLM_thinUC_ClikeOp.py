@@ -71,10 +71,10 @@ else:
     step = 0
     sTime = 0
 
-maxSteps = step + 10
-imSteps = 1
-cpSteps = 1
-trSteps = 1
+maxSteps = step + 2000
+imSteps = 10
+cpSteps = 20
+trSteps = 5
 
 
 # timingFlag = uw.__version__.find("2.5") == -1 or uw.__version__.find("2.6") == -1
