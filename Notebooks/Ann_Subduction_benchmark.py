@@ -62,7 +62,7 @@ ThetaRAD = np.rad2deg((modelHeight * modelCartAspect) / earthRadius)
 
 # plateHeight = 120. * u.kilometer
 refDensity = 3200.0 * u.kilogram / u.meter ** 3
-deltaRhoMax = 100.0 * u.kilogram / u.meter ** 3
+deltaRhoMax = 80.0 * u.kilogram / u.meter ** 3
 gravity = 9.8 * u.metre / u.second ** 2
 # 1.57e20 * u.pascal * u.second 5.e20 * u.pascal * u.second
 refViscosity = 5.0e20 * u.pascal * u.second
