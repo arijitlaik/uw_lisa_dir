@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "R2_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_2e15_Pen"
+outputDirName = "scR2_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_2e15_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -103,7 +103,7 @@ uw.barrier()
 modelHeight = 2880.0 * u.kilometer
 # plateHeight = 120. * u.kilometer
 refDensity = 3200.0 * u.kilogram / u.meter ** 3
-deltaRhoMax = 80.0 * u.kilogram / u.meter ** 3
+deltaRhoMax = 60.0 * u.kilogram / u.meter ** 3
 gravity = 9.8 * u.metre / u.second ** 2
 # 1.57e20 * u.pascal * u.second 5.e20 * u.pascal * u.second
 refViscosity = 5.0e20 * u.pascal * u.second
@@ -687,27 +687,27 @@ modelMaterials = [
         # "eta0":yield_visc(nd(06.*u.megapascal), nd(1e2*refViscosity)),
         # "eta1":yield_visc(nd(30.*u.megapascal), nd(5e1*refViscosity)),  # 5e1
         # "etaChangeDepth":150.*u.kilometer,
-        "density": 3280.0 * u.kilogram / u.meter ** 3,
+        "density": 3260.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lower Crust Indo-Australian Plate",
         "shape": slabshapes[1],
         "viscosity": 1e2 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
-        "density": 3280.0 * u.kilogram / u.meter ** 3,
+        "density": 3260.0 * u.kilogram / u.meter ** 3,
     },  # 5.*u.megapascal,
     {
         "name": "Lithospheric Mantle Crust Indo-Australian Plate",
         "shape": slabshapes[2],
         "viscosity": 1e3 * refViscosity,
         "cohesion": 350.0 * u.megapascal,  # hs
-        "density": 3280.0 * u.kilogram / u.meter ** 3,
+        "density": 3260.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Indo-Australian Plate",
         "shape": slabshapes[3],
         "viscosity": 5e1 * refViscosity,
-        "density": 3280.0 * u.kilogram / u.meter ** 3,
+        "density": 3260.0 * u.kilogram / u.meter ** 3,
         "cohesion": 30.0 * u.megapascal,
     },
     # Indian Indentor
@@ -723,7 +723,7 @@ modelMaterials = [
         "density": 2800.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
-        # "rho1":3280.*u.kilogram / u.meter**3,
+        # "rho1":3260.*u.kilogram / u.meter**3,
         # "rhoChangeDepth":150.*u.kilometer
     },
     {
@@ -734,7 +734,7 @@ modelMaterials = [
         "density": 2800.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
-        # "rho1":3280.*u.kilogram / u.meter**3,
+        # "rho1":3260.*u.kilogram / u.meter**3,
         # "rhoChangeDepth":150.*u.kilometer
     },
     {
@@ -745,7 +745,7 @@ modelMaterials = [
         "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":3200.*u.kilogram / u.meter**3,
-        # "rho1":3280.*u.kilogram / u.meter**3,
+        # "rho1":3260.*u.kilogram / u.meter**3,
         # "rhoChangeDepth":150.*u.kilometer
     },
     {
@@ -756,7 +756,7 @@ modelMaterials = [
         "density": 3220.0 * u.kilogram / u.meter ** 3
         # "density":"deptDependent",
         # "rho0":3220.*u.kilogram / u.meter**3,
-        # "rho1":3280.*u.kilogram / u.meter**3,
+        # "rho1":3260.*u.kilogram / u.meter**3,
         # "rhoChangeDepth":150.*u.
     },
     # Eurasian Plate
@@ -950,13 +950,13 @@ figDensity = glucifer.Figure(
 figDensity.Points(
     swarm,
     densityFn * sf.magnitude + refDensity.magnitude,
-    valueRange=[2800, 3280],
+    valueRange=[2800, 3260],
     fn_mask=materialVariable > 0,
     pointsize=1.9,
     colours="spectral",
 )
 
-figDensity.objects[0].colourBar["tickvalues"] = [2800, 2900, 3000, 3100, 3200, 3280]
+figDensity.objects[0].colourBar["tickvalues"] = [2800, 2900, 3000, 3100, 3200, 3260]
 if restartFlag is False:
     figDensity.save(outputDir + "/Density_Initial")
 # figDensity.save()

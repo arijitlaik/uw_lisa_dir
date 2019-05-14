@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"
-outputDirName = "R2_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_2e15_Pen"
+outputDirName = "R2_a_DrhoLM00_FaBa_Ts_thinUC_nlLM_8e15_Pen"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -132,7 +132,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 
 vRes = 64
 resMult = 2  # 64 being the base vRes
-aRatioMesh = 4  # xRes/yRes
+aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
 xRes = int(vRes * aRatioMesh * resMult)
@@ -651,7 +651,6 @@ def depthViscosityfn(viscosity0, viscosity1, depth, coordtype=None):
     )
 
 
-opViscFactor = 1.0
 modelMaterials = [
     # {"name": "Air",
     #  "shape": mantleandAirShape[0],
@@ -661,7 +660,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": power_visc(3.5, nd(2e-15 / u.second)),
+        "eta0": power_visc(3.5, nd(8e-15 / u.second)),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -763,38 +762,38 @@ modelMaterials = [
     {
         "name": "Crust Eurasian Plate ForeArc",
         "shape": overRidingShapesForeArc[0],
-        "viscosity": 1e3 * refViscosity * opViscFactor,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "viscosity": 1e3 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate ForeArc",
         "shape": overRidingShapesForeArc[1],
-        "viscosity": 5e2 * refViscosity * opViscFactor,
-        "density": 3220.0 * u.kilogram / u.meter ** 3,
+        "viscosity": 5e2 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Crust Eurasian Plate BackArc",
         "shape": overRidingShapesBackArc[0],
-        "viscosity": 2.5e2 * refViscosity * opViscFactor,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "viscosity": 2.5e2 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate BackArc",
         "shape": overRidingShapesBackArc[1],
-        "viscosity": 1.25e2 * refViscosity * opViscFactor,
-        "density": 3220.0 * u.kilogram / u.meter ** 3,
+        "viscosity": 1.25e2 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Crust Eurasian Plate",
         "shape": overRidingShapes[0],
-        "viscosity": 2e3 * refViscosity * opViscFactor,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "viscosity": 2e3 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
     {
         "name": "Lithospheric Mantle Eurasian Plate",
         "shape": overRidingShapes[1],
-        "viscosity": 1e3 * refViscosity * opViscFactor,
-        "density": 3220.0 * u.kilogram / u.meter ** 3,
+        "viscosity": 1e3 * refViscosity,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
     },
 ]
 

@@ -6,14 +6,6 @@ import underworld.scaling as scaling
 from underworld.scaling import units as u
 
 
-def powerLaw(eII, eIIref, n):
-    return np.power((eII/eIIref), (1.-n)/n)
-
-
-def powerLawA(eII, A, n):
-    return np.power(A, (-1.0/n))*np.power(eII, (1.-n)/n)
-
-
 dm = scaling.dimensionalise
 nd = scaling.non_dimensionalise
 
@@ -40,16 +32,33 @@ scaling_coefficients["[length]"] = KL.to_base_units()
 scaling_coefficients["[time]"] = Kt.to_base_units()
 scaling_coefficients["[mass]"] = KM.to_base_units()
 
+dm(621, u.megayears)
+
+
+def powerLaw(eII, eIIref, n):
+    return np.power((eII / eIIref), (1.0 - n) / n)
+
+
+def powerLawA(eII, A, n):
+    return np.power(A, (-1.0 / n)) * np.power(eII, (1.0 - n) / n)
+
+
 n = 3.5
-eIIs = np.linspace(nd(1e-18*1./u.second), nd(1e-12*1./u.second))
+eIIs = np.linspace(nd(1e-18 * 1.0 / u.second), nd(1e-12 * 1.0 / u.second))
 
 
-refEII = nd(1e-15*1./u.second)
+refEII = nd(1e-15 * 1.0 / u.second)
 etas = powerLaw(eIIs, refEII, n)
 etas2 = powerLaw(eIIs, 1, n)
 
-plt.loglog(dm(etas, u.pascal * u.second), dm(eIIs, 1./u.second))
-plt.loglog(dm(etas2, u.pascal * u.second), dm(eIIs, 1./u.second))
-plt.loglog(dm(powerLaw(eIIs+nd(1e-18*1./u.second), refEII, n),u.pascal * u.second), dm(eIIs, 1./u.second))
-#nd(1e-18*1./u.second)
-plt.loglog(dm(powerLaw(eIIs, nd(1e-13*1./u.second), n),u.pascal * u.second), dm(eIIs, 1./u.second))
+plt.loglog(dm(etas, u.pascal * u.second), dm(eIIs, 1.0 / u.second))
+plt.loglog(dm(etas2, u.pascal * u.second), dm(eIIs, 1.0 / u.second))
+plt.loglog(
+    dm(powerLaw(eIIs + nd(1e-18 * 1.0 / u.second), refEII, n), u.pascal * u.second),
+    dm(eIIs, 1.0 / u.second),
+)
+# nd(1e-18*1./u.second)
+plt.loglog(
+    dm(powerLaw(eIIs, nd(1e-13 * 1.0 / u.second), n), u.pascal * u.second),
+    dm(eIIs, 1.0 / u.second),
+)
