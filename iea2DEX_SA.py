@@ -68,8 +68,8 @@ else:
     step = 0
     sTime = 0
 
-maxSteps = step + 1000
-imSteps = 1
+maxSteps = step + 4000
+imSteps = 10
 cpSteps = 50
 trSteps = 5
 
@@ -133,7 +133,7 @@ if enableSA:
     vRes = 64 + 2 * 64 * stickyAirtHeight / modelHeight
 # vRes
 resMult = 8  # 64 being the base vRes
-aRatioMesh = 4  # xRes/yRes
+aRatioMesh = 2  # xRes/yRes
 if enableSA:
     aRatioMesh = 1.6
 aRatioCoor = 4  # Model len ratio
@@ -537,7 +537,7 @@ if enableSA:
         startX=0.0,
         topY=mesh.maxCoord[1],
         length=nd(modelHeight * aRatioCoor),
-        thicknessArray=[0.6*nd(stickyAirtHeight), 0.4*nd(stickyAirtHeight)],
+        thicknessArray=[0.6 * nd(stickyAirtHeight), 0.4 * nd(stickyAirtHeight)],
         # thicknessArray=[nd(660.*u.kilometer), nd(modelHeight-660.*u.kilometer)]
     )
 mantleShape = make_layer2d(
@@ -615,6 +615,7 @@ def viscosity_limit(viscosityFn, viscosityRange=viscRange):
 defaultSRInv = nd(1e-18 / u.second)
 strainRate = fn.tensor.symmetric(velocityField.fn_gradient)
 strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
+
 
 def yield_visc(cohesion, viscosity):
     eII = strainRate_2ndInvariant
@@ -983,9 +984,7 @@ sf = dm(1.0, 1.0 * u.kilogram / u.meter ** 3)
 # avgBuoyancyFn = averagedDensity * z_hat * nd(gravity)
 
 projDensity = mesh.subMesh.add_variable(1)
-projDensityMesh = uw.utils.MeshVariable_Projection(
-    projDensity, densityFn, type=0
-)
+projDensityMesh = uw.utils.MeshVariable_Projection(projDensity, densityFn, type=0)
 projDensityMesh.solve()
 averagedDensity = projDensity
 # projDensity.data[:] = projDensity.data[:] ** (1.0 / fnF)
@@ -1036,11 +1035,9 @@ if restartFlag is False:
 
 
 oneOnLambdaMap = {
-    i: mat["oneOnLambda"]
-    if mat.get("oneOnLambda")
-    else 0.
+    i: mat["oneOnLambda"] if mat.get("oneOnLambda") else 0.0
     for (i, mat) in enumerate(modelMaterials)
-    }
+}
 oneOnLambdafn = fn.branching.map(fn_key=materialVariable, mapping=oneOnLambdaMap)
 stokes = uw.systems.Stokes(
     velocityField=velocityField,
@@ -1072,11 +1069,11 @@ solver.options.scr.use_previous_guess = True
 solver.options.scr.ksp_set_min_it_converge = 10
 solver.options.scr.ksp_type = "cg"
 
-#solver.options.main.help = ""
+# solver.options.main.help = ""
 solver.options.main.remove_constant_pressure_null_space = True
-#solver.options.main.Q22_pc_type = "uwscale"
+# solver.options.main.Q22_pc_type = "uwscale"
 solver.set_penalty(0)
-#Model.solver  solver
+# Model.solver  solver
 
 # solver.options.main.remove_checkerboard_pressure_null_space = True
 
@@ -1390,7 +1387,7 @@ while step < maxSteps:
     time, step, dt = model_update()
     dmTime = dm(time, 1.0 * u.megayear).magnitude
 
-    if step % imSteps == 0 or step == maxSteps - 1:
+    if step % imSteps == 0 or step == maxSteps - 1 or step in (1, 2, 3, 4, 5):
         output_figures(step)
 
     if uw.rank() == 0:
