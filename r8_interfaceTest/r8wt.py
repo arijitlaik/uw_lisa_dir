@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15
-outputDirName = "wtR8_utUc_eta0_1e3_Lc1e3_nlLM_1e15_sLc"
+outputDirName = "wtR8_utUc_thDc_eta0_1e3_Lc1e3_nlLM_1e15_sLc"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -578,9 +578,9 @@ indentorshapes = make_Indentor2d(
     thicknessArray=[
         nd(5.0 * u.kilometer),
         nd(10.0 * u.kilometer),
+        nd(25.0 * u.kilometer),
+        nd(10.0 * u.kilometer),
         nd(20.0 * u.kilometer),
-        nd(5.0 * u.kilometer),
-        nd(30.0 * u.kilometer),
         nd(30.0 * u.kilometer),
     ],  # UL
     taper2=12,

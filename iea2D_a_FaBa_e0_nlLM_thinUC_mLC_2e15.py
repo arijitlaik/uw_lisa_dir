@@ -1000,11 +1000,11 @@ solver.set_penalty(1e6)
 # solver.options.scr.ksp_set_min_it_converge = 3
 
 # #Set more advanced solver option
-# solver.options.main.Q22_pc_type='gkgdiag'
+solver.options.main.Q22_pc_type = "gtkg"
 # # solver.options.A11.ksp_rtol=1e-2
 # # solver.options.scr.ksp_rtol=1e-3
-solver.options.A11.ksp_type = "cg"
-solver.options.scr.use_previous_guess = True
+# solver.options.A11.ksp_type = "cg"
+# solver.options.scr.use_previous_guess = True
 # #solver.options.scr.ksp_set_min_it_converge = 1
 # #solver.options.main.penalty=10.0
 #

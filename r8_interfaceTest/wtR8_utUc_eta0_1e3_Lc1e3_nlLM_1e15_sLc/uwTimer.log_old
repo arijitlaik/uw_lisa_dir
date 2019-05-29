@@ -1,0 +1,17 @@
+line_routine                                              hits  tot_time av_time
+--------------------------------------------------------  ---- --------- -------
+r8wt.py: 1316   StokesSolver.solve()                       948 87350.547  92.142
+r8wt.py: 1147   Figure.save()                               99  1807.690  18.259
+r8wt.py: 1144   Figure.save_image()                         99  1800.596  18.188
+r8wt.py: 1146   Figure.save_image()                         99  1795.700  18.138
+r8wt.py: 1177   SwarmAdvector.integrate()                  948   744.970   0.786
+r8wt.py: 1188   PopulationControl.repopulate()             948   226.396   0.239
+r8wt.py: 1148   Figure.save_image()                         99   111.789   1.129
+r8wt.py:  399   MeshVariable.save()                        147    79.895   0.544
+r8wt.py: 1319   FeMesh_Cartesian.integrate()              1896    60.517   0.032
+r8wt.py:  417   Swarm.save()                               240    52.976   0.221
+r8wt.py: 1143   MeshVariable_Projection._solve_average()    99    32.697   0.330
+r8wt.py:  420   SwarmVariable.save()                       431    29.338   0.068
+
+Total Time (UW2 API) :                                         94195.842        
+Total Time (Runtime) :                                           143.525        
