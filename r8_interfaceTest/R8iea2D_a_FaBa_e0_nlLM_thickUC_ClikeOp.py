@@ -24,15 +24,16 @@ from colorMaps import vlike as vlike
 import pickle
 import json
 import datetime
-
+import shutil
 
 #
 # Logging, output path and restarting stuff
 #
+shutil.copy(__file__, "new_destination.py")
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15
-outputDirName = "R8_utUc_eta0_1e3_Lc1e3_nlLM_4e15_sLc"
+outputDirName = "R8_utUc_eta0_1e3_Lc1e3_nlLM_2.5e15_sLc"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -92,6 +93,9 @@ if uw.rank() == 0:
     if restartFlag:
         logFile.write("\n-------RESTARTING MODEL--------\n")
         logFile.write("\nNprocs:" + str(uw.nProcs()) + "\n")
+if ('ipykernel' not in sys.modules) and (restartFlag is False):
+    import shutil
+    shutil.copy(__file__, outputDir+"script.py")
 
 uw.barrier()
 
@@ -181,12 +185,12 @@ figSize = (1600 * 2, int(1600 / aRatioCoor) * 2 + 110)
 
 # setupStore = glucifer.Store(outputDir+"/setup")
 setupStore = None
-figMesh = glucifer.Figure(
-    store=setupStore, figsize=figSize, quality=3, boundingBox=bBox
-)
-figMesh.Mesh(mesh)
+# figMesh = glucifer.Figure(
+#    store=setupStore, figsize=figSize, quality=3, boundingBox=bBox
+# )
+# figMesh.Mesh(mesh)
 # # figMesh.save()
-figMesh.save(outputDir + "/MeshInit2.png")
+# figMesh.save(outputDir + "/MeshInit2.png")
 uw.barrier()  # another safeguard
 if restartFlag is False:
     if uw.rank() == 0:
@@ -257,7 +261,7 @@ if restartFlag is False:
     uw.barrier()  # safeguard
     # setupStore.step = 1
     # figMesh.save()
-    figMesh.save(outputDir + "/MesHRef.png")
+    #   figMesh.save(outputDir + "/MesHRef.png")
 
     if uw.rank() == 0:
         print("Deforming Mesh......Done!")
@@ -661,7 +665,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": power_visc(3.5, nd(4e-15 / u.second)),
+        "eta0": power_visc(3.5, nd(2.5e-15 / u.second)),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",

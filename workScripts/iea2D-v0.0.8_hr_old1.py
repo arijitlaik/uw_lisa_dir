@@ -70,6 +70,9 @@ if uw.rank() == 0:
     if restartFlag:
         logFile.write("\n-------RESTARTING MODEL--------\n")
         logFile.write("\nNprocs:" + str(uw.nProcs()) + "\n")
+if ('ipykernel' not in sys.modules) and (restartFlag is False):
+    import shutil
+    shutil.copy(__file__, outputDir+"script.py")
 
 
 uw.barrier()
