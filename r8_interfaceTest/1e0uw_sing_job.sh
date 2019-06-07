@@ -1,13 +1,7 @@
 #!/bin/bash
 #SBATCH -p normal
-#SBATCH -n 48
+#SBATCH -n 16
 #SBATCH -t 96:00:00
-
-# SBATCH -p short
-# SBATCH --nodes=4
-# SBATCH --constraint=infiniband,avx2
-# SBATCH --constraint=infiniband
-# SBATCH --tasks-per-node 12
 
 echo "********** CPU-INFO **********"
 lscpu
@@ -26,7 +20,7 @@ echo 'UW_VERSION: '$IMAGE_VERSION
 
 echo "********** Run Started **********"
 
-srun -n 48 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python r8wt.py
+srun -n 16 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python R8iea2D_a_FaBa_e0_nlLM_thickUC_ClikeOp2.py
 
 echo "********** XXXXXXXXXXX **********"
 

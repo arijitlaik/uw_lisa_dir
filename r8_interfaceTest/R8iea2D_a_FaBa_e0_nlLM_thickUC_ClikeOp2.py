@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15
-outputDirName = "wtR8_utUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
+outputDirName = "R8_utUc_eta0_1e3_Lc1e3_nlLM_2e15_sLc"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -51,7 +51,7 @@ else:
     rstep = int(lC[0])
     sTime = float(lC[-1].split(";")[0])
     fH.close()
-    if rstep < 1:
+    if rstep <= 1:
         restartFlag = False
         clearLog = False
     else:
@@ -72,9 +72,9 @@ else:
     sTime = 0
 
 maxSteps = step + 4000
-imSteps = 10
-cpSteps = 20
-trSteps = 5
+imSteps = 25
+cpSteps = 50
+trSteps = 10
 
 
 # timingFlag = uw.__version__.find("2.5") == -1 or uw.__version__.find("2.6") == -1
@@ -177,16 +177,16 @@ mesh = uw.mesh.FeMesh_Cartesian(
 
 bBox = ((mesh.minCoord[0], mesh.minCoord[1]), (mesh.maxCoord[0], mesh.maxCoord[1]))
 figSize = (1600 * 2, int(1600 / aRatioCoor) * 2 + 110)
-# figSize = (3200, 910)
-#
-# # setupStore = glucifer.Store(outputDir+"/setup")
-# setupStore = None
-# figMesh = glucifer.Figure(
-#     store=setupStore, figsize=figSize, quality=2, boundingBox=bBox
-# )
-# figMesh.Mesh(mesh)
+# figSize = (1800, 600)
+
+# setupStore = glucifer.Store(outputDir+"/setup")
+setupStore = None
+figMesh = glucifer.Figure(
+    store=setupStore, figsize=figSize, quality=3, boundingBox=bBox
+)
+figMesh.Mesh(mesh)
 # # figMesh.save()
-# figMesh.save(outputDir + "/MeshInit2.png")
+figMesh.save(outputDir + "/MeshInit2.png")
 uw.barrier()  # another safeguard
 if restartFlag is False:
     if uw.rank() == 0:
@@ -257,7 +257,7 @@ if restartFlag is False:
     uw.barrier()  # safeguard
     # setupStore.step = 1
     # figMesh.save()
-    # figMesh.save(outputDir + "/MesHRef.png")
+    figMesh.save(outputDir + "/MesHRef.png")
 
     if uw.rank() == 0:
         print("Deforming Mesh......Done!")
@@ -577,10 +577,8 @@ indentorshapes = make_Indentor2d(
     taper=18,
     thicknessArray=[
         nd(5.0 * u.kilometer),
-        nd(10.0 * u.kilometer),
         nd(25.0 * u.kilometer),
-        nd(10.0 * u.kilometer),
-        nd(20.0 * u.kilometer),
+        nd(30.0 * u.kilometer),
         nd(30.0 * u.kilometer),
     ],  # UL
     taper2=12,
@@ -663,7 +661,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": power_visc(3.5, nd(2.5e-15 / u.second)),
+        "eta0": power_visc(3.5, nd(2e-15 / u.second)),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -729,36 +727,10 @@ modelMaterials = [
         # "rhoChangeDepth":150.*u.kilometer
     },
     {
-        "name": "Upper Crust Indian Indentor",
+        "name": "Lower Crust Indian Indentor",
         "shape": indentorshapes[1],
-        # "viscosity":"deptDependent",
-        # "eta0":yield_visc(nd(06.*u.megapascal), nd(1e2*refViscosity)),  # 1e2
-        # "eta1":yield_visc(nd(30.*u.megapascal), nd(5e1*refViscosity)),  # 5e1
-        # "etaChangeDepth":150.*u.kilometer,
         "viscosity": 1e3 * refViscosity,
-        "cohesion": 30.0 * u.megapascal,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
-        # "density":"deptDependent",
-        # "rho0":2800.*u.kilogram / u.meter**3,
-        # "rho1":3280.*u.kilogram / u.meter**3,
-        # "rhoChangeDepth":150.*u.kilometer
-    },
-    {
-        "name": "Lower Crust Indian Indentor",
-        "shape": indentorshapes[2],
-        "viscosity": 1e3 * refViscosity,
-        "cohesion": 100.0 * u.megapascal,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
-        # "density":"deptDependent",
-        # "rho0":2800.*u.kilogram / u.meter**3,
-        # "rho1":3280.*u.kilogram / u.meter**3,
-        # "rhoChangeDepth":150.*u.kilometer
-    },
-    {
-        "name": "Lower Crust Indian Indentor",
-        "shape": indentorshapes[3],
-        "viscosity": 1e3 * refViscosity,
-        "cohesion": 06.0 * u.megapascal,
+        "cohesion": 50.0 * u.megapascal,
         "density": 2800.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
@@ -767,7 +739,7 @@ modelMaterials = [
     },
     {
         "name": "Lithospheric Mantle Indian Indentor",
-        "shape": indentorshapes[4],
+        "shape": indentorshapes[2],
         "viscosity": 1e3 * refViscosity,
         "cohesion": 350.0 * u.megapascal,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
@@ -778,7 +750,7 @@ modelMaterials = [
     },
     {
         "name": "Lithospheric Mantle Indian Indentor",
-        "shape": indentorshapes[5],
+        "shape": indentorshapes[3],
         "viscosity": 5e1 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
         "density": 3220.0 * u.kilogram / u.meter ** 3
@@ -860,8 +832,8 @@ if restartFlag is False:
 if restartFlag is True:
     load_swarm_vars(step=rstep)
 
-store = glucifer.Store(outputDir + "/mat")
-# store = None
+# store = glucifer.Store(outputDir+'/ieaHR')
+store = None
 figParticle = glucifer.Figure(
     store, figsize=figSize, name="Materials", boundingBox=bBox
 )
@@ -881,7 +853,7 @@ figParticle.objects[0].colourBar["binlabels"] = True
 figParticle.objects[0].colourBar["size"] = [0.8, 0.02]
 if restartFlag is False:
     figParticle.save(outputDir + "/Particles_Initial")
-store = None
+
 # figParticle.show()
 
 # WIP! check for the scaling of the exponent
