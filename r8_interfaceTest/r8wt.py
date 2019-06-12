@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15
-outputDirName = "wtR8_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
+outputDirName = "wtR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -773,7 +773,7 @@ modelMaterials = [
         "shape": indentorshapes[4],
         "viscosity": 1e3 * refViscosity,
         "cohesion": 350.0 * u.megapascal,
-        "density": 3200.0 * u.kilogram / u.meter ** 3,
+        "density": 3280.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":3200.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -784,7 +784,7 @@ modelMaterials = [
         "shape": indentorshapes[5],
         "viscosity": 5e1 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
-        "density": 3220.0 * u.kilogram / u.meter ** 3
+        "density": 3280.0 * u.kilogram / u.meter ** 3
         # "density":"deptDependent",
         # "rho0":3220.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
