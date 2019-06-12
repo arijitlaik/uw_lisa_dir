@@ -38,8 +38,9 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 
 dataCols = ["time", "velocity" "Depth" "Exp"]
 df = pd.DataFrame(columns=dataCols)
-setPostFix = ["00", "00_a_indNB", "30", "30_hiSpEta", "50"]
+# setPostFix = ["00", "00_a_indNB", "30", "30_hiSpEta", "50"]
 # setPostFix = ["50", "30", "00", "00_a_indNB", "00_a", "hiSpEta", "LRINDNB"]
+setPostFix = ["","wtR8_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc","R8_utUc_eta0_1e3_Lc1e3_nlLM_1e15_sL"]
 opD = "./tracerPP/"
 for i in setPostFix:
 
