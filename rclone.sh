@@ -1,17 +1,10 @@
 #!/bin/bash
 #SBATCH --nodes=1
-
-# SBATCH --constraint=infiniband
-# SBATCH --tasks-per-node 16
-
-# SBATCH --constraint=avx2
-# SBATCH --nodes=3
-# SBATCH --tasks-per-node 16
-#SBATCH --time=48:00:00
+#SBATCH --time=12:00:00
 
 
 ip addr
 echo "********** Run Started **********"
-rclone -v sync '/home/alaik/uw/EXPSET-n' 'gdalk:/EXPSET-n/Lisa'
+rclone copy /home/alaik/uw/r8_interfaceTest/ gdalk:/EXPSET-n/Lisa/r8_interfaceTest/
 
 wait
