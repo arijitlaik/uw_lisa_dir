@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15
-outputDirName = "cRhoVR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
+outputDirName = "NoSmoothwtR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
