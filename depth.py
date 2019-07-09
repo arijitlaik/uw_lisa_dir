@@ -57,16 +57,17 @@ refineVert = True
 refInt = [0.00125, 0.00125]
 refRange = [0.5, -0.25]
 sTime = 0
-time = sTime 
+time = sTime
 dt = 0.0
 CFL = 1.0  # 0.1*refInt[1]*yRes
 
 # **READ/PARSE LOGS** #
 # "00",  00_a_indNB  30  30_hiSpEta  50
 # =================== #
-setPostFixes = ["00", "00_a_indNB", "30", "30_hiSpEta", "50"]
+setDir = "/Users/arijit/Documents/research/lisa/uw/r8_interfaceTest/"
+setPostFixes = ["wtR8_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"]
 for setPostFix in setPostFixes:
-    outputDirName = "EXPSET-e/" + setPostFix
+    outputDirName = setDir + setPostFix
     # outputDirName = "sftp://alaik@lisa.surfsara.nl/home/alaik/uw/4x12_8-00175_DrhoLM00"
     outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 

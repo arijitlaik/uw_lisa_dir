@@ -150,7 +150,7 @@ plt.style.use("seaborn")
 plt.style.use("seaborn")
 # plt.figure()
 # %matplotlib
-plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t0$")
+plt.plot(dm(time[:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_t0$")
 plt.plot(dm(time[:, 1], u.megayear), -dm(vtr, u.centimeter / u.year), label="$V_tE$")
 
 plt.plot(dm(time[:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_{sp}0$")
