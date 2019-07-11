@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15
-outputDirName = "NoSmoothwtR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
+outputDirName = "wtR8__FaShort_DenLim_bNuLc_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -600,7 +600,7 @@ overRidingShapesForeArc = make_overRidingPlate2d(
 overRidingShapesBackArc = make_overRidingPlate2d(
     topX=mesh.maxCoord[0] - mesh.minCoord[0],
     topY=nd(0.0 * u.kilometer),
-    length=-nd((2.0 - 0.075) * modelHeight),
+    length=-nd((2.0 - 0.050) * modelHeight),
     taper=90,
     dip=90,
     thicknessArray=[nd(30.0 * u.kilometer), nd(30.0 * u.kilometer)],
@@ -751,7 +751,7 @@ modelMaterials = [
         "shape": indentorshapes[2],
         "viscosity": 1e3 * refViscosity,
         "cohesion": 100.0 * u.megapascal,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -762,7 +762,7 @@ modelMaterials = [
         "shape": indentorshapes[3],
         "viscosity": 1e3 * refViscosity,
         "cohesion": 06.0 * u.megapascal,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -1316,7 +1316,7 @@ while step < maxSteps:
     solver.solve(
         nonLinearIterate=True,
         nonLinearTolerance=ntol,
-    #   callback_post_solve=pressure_calibrate,
+        callback_post_solve=pressure_calibrate,
     )
 
     Vrms = np.sqrt(mesh.integrate(vdotv)[0] / mesh.integrate(1.0)[0])
