@@ -65,8 +65,8 @@ CFL = 1.0  # 0.1*refInt[1]*yRes
 # "00",  00_a_indNB  30  30_hiSpEta  50
 # =================== #
 # setPostFixes = ["00", "00_a_indNB", "30", "30_hiSpEta", "50"]
-setDir = "/Users/arijit/Documents/research/lisa/uw/r8_interfaceTest/"
-setPostFixes = ["wtR8_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"]
+setDir = "/Volumes/GoogleDrive/My Drive/EXPSET-n/Lisa/r8_interfaceTest"
+setPostFixes = ["wtR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc-NoSmooth","wtR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc-NoSmooth"]
 for setPostFix in setPostFixes:
     outputDirName = setDir + setPostFix
     # outputDirName = "sftp://alaik@lisa.surfsara.nl/home/alaik/uw/4x12_8-00175_DrhoLM00"
@@ -150,7 +150,7 @@ plt.style.use("seaborn")
 plt.style.use("seaborn")
 # plt.figure()
 # %matplotlib
-plt.plot(dm(time[1:, 1], u.megayear), dm(vt, u.centimeter / u.year), label="$V_t0$")
+plt.plot(dm(time[:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_t0$")
 plt.plot(dm(time[:, 1], u.megayear), -dm(vtr, u.centimeter / u.year), label="$V_tE$")
 
 plt.plot(dm(time[:, 1], u.megayear), dm(vs, u.centimeter / u.year), label="$V_{sp}0$")

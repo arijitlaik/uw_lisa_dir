@@ -82,7 +82,7 @@ dt = 0.0
 CFL = 1.0
 
 
-outputDir = "/Users/arijit/Documents/research/lisa1/uw/r8_interfaceTest/R8_utUc_eta0_1e3_Lc1e3_nlLM_1e15_sLc/"
+outputDir = "/Volumes/GoogleDrive/My Drive/EXPSET-n/Lisa/r8_interfaceTest"
 
 # fH = open(outputDir + "/checkpoint.log", "r")
 #
