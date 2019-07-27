@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15
-outputDirName = "wtR8_DenLim_bNuLc_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
+outputDirName = "wtR8_DenLim_bNuLc_wLC_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -739,7 +739,7 @@ modelMaterials = [
         # "eta1":yield_visc(nd(30.*u.megapascal), nd(5e1*refViscosity)),  # 5e1
         # "etaChangeDepth":150.*u.kilometer,
         "viscosity": 1e3 * refViscosity,
-        "cohesion": 30.0 * u.megapascal,
+        "cohesion": 100.0 * u.megapascal,
         "density": 2800.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
@@ -750,7 +750,7 @@ modelMaterials = [
         "name": "Lower Crust Indian Indentor",
         "shape": indentorshapes[2],
         "viscosity": 1e3 * refViscosity,
-        "cohesion": 100.0 * u.megapascal,
+        "cohesion": 06.0 * u.megapascal,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
@@ -761,7 +761,7 @@ modelMaterials = [
         "name": "Lower Crust Indian Indentor",
         "shape": indentorshapes[3],
         "viscosity": 1e3 * refViscosity,
-        "cohesion": 06.0 * u.megapascal,
+        "cohesion": 30.0 * u.megapascal,
         "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,

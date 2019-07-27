@@ -32,7 +32,7 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15
-outputDirName = "TTTTTwtR8_utUc_thDc_eta0_1e3_Lc1e3_nlLM_1e15_sLc"
+outputDirName = "wtR8_DenLim_bNuLc_wLC_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
 
 outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
 if uw.rank() == 0:
@@ -71,9 +71,9 @@ else:
     step = 0
     sTime = 0
 
-maxSteps = step + 2000
-imSteps = 10
-cpSteps = 20
+maxSteps = step + 6000
+imSteps = 25
+cpSteps = 25
 trSteps = 5
 
 
@@ -94,7 +94,7 @@ if uw.rank() == 0:
         logFile.write("\nNprocs:" + str(uw.nProcs()) + "\n")
 if ('ipykernel' not in sys.modules) and (restartFlag is False):
     import shutil
-    shutil.copy(__file__, outputDir+"script.py")
+    shutil.copy(__file__, outputDir+"/script.py")
 
 uw.barrier()
 
@@ -581,9 +581,9 @@ indentorshapes = make_Indentor2d(
     thicknessArray=[
         nd(5.0 * u.kilometer),
         nd(10.0 * u.kilometer),
-        nd(25.0 * u.kilometer),
+        nd(15.0 * u.kilometer),
         nd(10.0 * u.kilometer),
-        nd(20.0 * u.kilometer),
+        nd(30.0 * u.kilometer),
         nd(30.0 * u.kilometer),
     ],  # UL
     taper2=12,
@@ -666,7 +666,7 @@ modelMaterials = [
         "name": "Mantle",
         "shape": mantleShape[0],
         "viscosity": "deptDependent",
-        "eta0": power_visc(3.5, nd(1e-15 / u.second)),
+        "eta0": power_visc(3.5, nd(2.5e-15 / u.second)),
         "eta1": 1e2 * refViscosity,
         "etaChangeDepth": 660.0 * u.kilometer,
         "density": "deptDependent",
@@ -739,7 +739,7 @@ modelMaterials = [
         # "eta1":yield_visc(nd(30.*u.megapascal), nd(5e1*refViscosity)),  # 5e1
         # "etaChangeDepth":150.*u.kilometer,
         "viscosity": 1e3 * refViscosity,
-        "cohesion": 30.0 * u.megapascal,
+        "cohesion": 100.0 * u.megapascal,
         "density": 2800.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
@@ -750,8 +750,8 @@ modelMaterials = [
         "name": "Lower Crust Indian Indentor",
         "shape": indentorshapes[2],
         "viscosity": 1e3 * refViscosity,
-        "cohesion": 100.0 * u.megapascal,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "cohesion": 06.0 * u.megapascal,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -761,8 +761,8 @@ modelMaterials = [
         "name": "Lower Crust Indian Indentor",
         "shape": indentorshapes[3],
         "viscosity": 1e3 * refViscosity,
-        "cohesion": 06.0 * u.megapascal,
-        "density": 2800.0 * u.kilogram / u.meter ** 3,
+        "cohesion": 30.0 * u.megapascal,
+        "density": 3200.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":2800.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -773,7 +773,7 @@ modelMaterials = [
         "shape": indentorshapes[4],
         "viscosity": 1e3 * refViscosity,
         "cohesion": 350.0 * u.megapascal,
-        "density": 3200.0 * u.kilogram / u.meter ** 3,
+        "density": 3280.0 * u.kilogram / u.meter ** 3,
         # "density":"deptDependent",
         # "rho0":3200.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
@@ -784,7 +784,7 @@ modelMaterials = [
         "shape": indentorshapes[5],
         "viscosity": 5e1 * refViscosity,
         "cohesion": 30.0 * u.megapascal,
-        "density": 3220.0 * u.kilogram / u.meter ** 3
+        "density": 3280.0 * u.kilogram / u.meter ** 3
         # "density":"deptDependent",
         # "rho0":3220.*u.kilogram / u.meter**3,
         # "rho1":3280.*u.kilogram / u.meter**3,
