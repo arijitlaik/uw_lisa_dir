@@ -4,27 +4,25 @@
 
 # Good Old Imports
 
+import datetime
+import json
+import pickle
+from colorMaps import vlike as vlike
+from colorMaps import coldmorning as coldmorning
+import numpy as np
+import glucifer
+from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
+from underworld.scaling import units as u
+from underworld import function as fn
+import underworld as uw
 import os
 import sys
 
 os.environ["UW_ENABLE_TIMING"] = "1"
-import underworld as uw
-from underworld import function as fn
 
-from underworld.scaling import units as u
-from underworld.scaling import dimensionalise as dm, non_dimensionalise as nd
-
-import glucifer
 
 # import colorcet as cc
 # import tokyo
-import numpy as np
-from colorMaps import coldmorning as coldmorning
-from colorMaps import vlike as vlike
-
-import pickle
-import json
-import datetime
 
 
 #
@@ -33,54 +31,55 @@ import datetime
 
 # outputDirName = "dev_py3_TEST_opTe_2x12_512x256"
 # outputDirName = "4x12_8-00175_hiSpEta"R8_a_DrhoLM00_ClikeOP_FaBa_Ts_thinUC_nlLM_1e15
-outputDirName = "wtR8_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"
+outputDirName = "18defSRInv_LR_a_DrhoLM00_FaBa_Ts_nlLM_5e15_Pen"
 if outputDirName in os.path.abspath("."):
-    outputDir=os.path.join(os.path.abspath(".")+"/")
+    outputDir = os.path.join(os.path.abspath(".")+"/")
 else:
     outputDir = os.path.join(os.path.abspath("."), outputDirName + "/")
-
 outputDir
-
+os.path.exists(outputDir)
 if uw.rank() == 0:
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
 uw.barrier()
 
-try:
-    fH = open(outputDir + "/checkpoint.log", "r")
-except IOError:
-    restartFlag = False
-    clearLog = True
-else:
-    lnF = fH.readlines()[-1]
-    lC = lnF.split(",")
-    rstep = int(lC[0])
-    sTime = float(lC[-1].split(";")[0])
-    fH.close()
-    if rstep < 1:
-        restartFlag = False
-        clearLog = False
-    else:
-        restartFlag = True
-        clearLog = False
+# try:
+#     fH = open(outputDir + "/checkpoint.log", "r")
+# except IOError:
+#     restartFlag = False
+#     clearLog = True
+# else:
+#     lnF = fH.readlines()[-1]
+#     lC = lnF.split(",")
+#     rstep = int(lC[0])
+#     sTime = float(lC[-1].split(";")[0])
+#     fH.close()
+#     if rstep < 1:
+#         restartFlag = False
+#         clearLog = False
+#     else:
+#         restartFlag = True
+#         clearLog = False
+#
+# uw.barrier()
+checkpointedSteps = np.sort(
+    np.unique(
+        np.array(
+            [
+                int(os.path.splitext(filename)[0].split("-")[-1])
+                for filename in os.listdir(outputDir)
+                if "-" in filename
+            ]
+        )
+    )
+)
+checkpointedSteps
 
-uw.barrier()
-
-rstep = 400
+restartFlag = True if checkpointedSteps.shape[0] > 0 else False
+step = checkpointedSteps[-1] if restartFlag else 0
 # rtimeDm = 0
 # clearLog = False
 # restartFlag = False
-if restartFlag:
-    step = rstep
-
-else:
-    step = 0
-    sTime = 0
-
-maxSteps = step + 4000
-imSteps = 10
-cpSteps = 20
-trSteps = 5
 
 
 # timingFlag = uw.__version__.find("2.5") == -1 or uw.__version__.find("2.6") == -1
@@ -90,20 +89,20 @@ if timingFlag:
     uw.timing.start()
 
 
-if uw.rank() == 0:
-    if clearLog:
-        logFile = open(outputDir + "/runLog.log", "w+")
-    else:
-        logFile = open(outputDir + "/runLog.log", "a+")
-    if restartFlag:
-        logFile.write("\n-------RESTARTING MODEL--------\n")
-        logFile.write("\nNprocs:" + str(uw.nProcs()) + "\n")
-if ('ipykernel' not in sys.modules) and (restartFlag is False):
-    import shutil
-    shutil.copy(__file__, outputDir+"/script.py")
-
-uw.barrier()
-
+# if uw.rank() == 0:
+#     if clearLog:
+#         logFile = open(outputDir + "/runLog.log", "w+")
+#     else:
+#         logFile = open(outputDir + "/runLog.log", "a+")
+#     if restartFlag:
+#         logFile.write("\n-------RESTARTING MODEL--------\n")
+#         logFile.write("\nNprocs:" + str(uw.nProcs()) + "\n")
+# if ('ipykernel' not in sys.modules) and (restartFlag is False):
+#     import shutil
+#     shutil.copy(__file__, outputDir+"/script.py")
+#
+# uw.barrier()
+#
 #
 # Scaling and Units
 #
@@ -140,7 +139,7 @@ scaling_coefficients["[mass]"] = KM.to_base_units()
 #
 
 vRes = 64
-resMult = 8  # 64 being the base vRes
+resMult = 4  # 64 being the base vRes
 aRatioMesh = 2  # xRes/yRes
 aRatioCoor = 4  # Model len ratio
 yRes = int(vRes * resMult)
@@ -149,30 +148,30 @@ refineHoriz = True
 refineVert = True
 # refineHoriz = False
 # refineVert = False
-refInt = [1 / (resMult * 1e2), 1 / (resMult * 2e2)]
-refRange = [0.6, -0.125]
-refARx = [0.75, 0.25]
-time = sTime
-dt = 0.0
-# CFL = 0.1*refInt[1]*yRes
-CFL = 1.0
+# refInt = [1 / (resMult * 1e2), 1 / (resMult * 2e2)]
+# refRange = [0.6, -0.125]
+# refARx = [0.75, 0.25]
+# time = sTime
+# dt = 0.0
+# # CFL = 0.1*refInt[1]*yRes
+# CFL = 1.0
 
-if uw.rank() == 0:
-    logFile.write("\n===================================================\n")
-    logFile.write("\nTimestamp: {0} \n".format(datetime.datetime.now()))
-    logFile.write("\nNprocs: " + str(uw.nProcs()) + "\n")
-    logFile.write("\nRes: {0}x{1} , CFL: {2}\n".format(xRes, yRes, CFL))
-    logFile.write("\nrestartFlag: {0}, clearLog:{1} \n".format(restartFlag, clearLog))
-    logFile.write("\n(Re)Starting... step={0} at time={1} ".format(step, time))
-    logFile.write("\n===================================================\n")
-    logFile.close()
-# The first solve would be linear, i.e. strainRate_2ndInvariant would be equal to the defaultSRInv
-# if(restartFlag):
-#     solver_solution_exist = fn.misc.constant(True)
-# else:
-#     solver_solution_exist = fn.misc.constant(False)
-#
-# solver_solution_exist.value
+# if uw.rank() == 0:
+#     logFile.write("\n===================================================\n")
+#     logFile.write("\nTimestamp: {0} \n".format(datetime.datetime.now()))
+#     logFile.write("\nNprocs: " + str(uw.nProcs()) + "\n")
+#     logFile.write("\nRes: {0}x{1} , CFL: {2}\n".format(xRes, yRes, CFL))
+#     logFile.write("\nrestartFlag: {0}, clearLog:{1} \n".format(restartFlag, clearLog))
+#     logFile.write("\n(Re)Starting... step={0} at time={1} ".format(step, time))
+#     logFile.write("\n===================================================\n")
+#     logFile.close()
+# # The first solve would be linear, i.e. strainRate_2ndInvariant would be equal to the defaultSRInv
+# # if(restartFlag):
+# #     solver_solution_exist = fn.misc.constant(True)
+# # else:
+# #     solver_solution_exist = fn.misc.constant(False)
+# #
+# # solver_solution_exist.value
 
 mesh = uw.mesh.FeMesh_Cartesian(
     elementType=("Q1/dQ0"),
@@ -184,7 +183,8 @@ mesh = uw.mesh.FeMesh_Cartesian(
     periodic=[False, False],
 )
 
-bBox = ((mesh.minCoord[0], mesh.minCoord[1]), (mesh.maxCoord[0], mesh.maxCoord[1]))
+bBox = ((mesh.minCoord[0], mesh.minCoord[1]),
+        (mesh.maxCoord[0], mesh.maxCoord[1]))
 figSize = (1600 * 2, int(1600 / aRatioCoor) * 2 + 110)
 # figSize = (3200, 910)
 #
@@ -197,83 +197,86 @@ figSize = (1600 * 2, int(1600 / aRatioCoor) * 2 + 110)
 # # figMesh.save()
 # figMesh.save(outputDir + "/MeshInit2.png")
 uw.barrier()  # another safeguard
-if restartFlag is False:
-    if uw.rank() == 0:
-        print("Deforming Mesh.....!")
-
-    # if refineHoriz:
-    #     xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
-    #     cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
-    #     xL = np.arange(cenX, cenX + refRange[0] / 2.0, refInt[0])
-    #     xG = np.geomspace(
-    #         cenX + refRange[0] / 2,
-    #         mesh.maxCoord[0],
-    #         mesh.elementRes[0] / 2.0 - xL.size + 1,
-    #     )
-    #     # xG = np.linspace(
-    #     #     cenX + refRange[0]/2, mesh.maxCoord[0], mesh.elementRes[0]/2. - xL.size+1)
-    #     assert mesh.elementRes[0] / 2 - (xL.size + xG.size) == -1
-    #     xR = np.concatenate((xL, xG), axis=0)
-    #     xrF = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xR, axis=0)
-    #     xR = np.concatenate((xrF, xR), axis=0)
-    #     xR = np.delete(xR, xR.size / 2)
-    #     assert mesh.elementRes[0] + 1 - xR.size == 0
-    if refineHoriz:
-        xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
-        cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
-        xL = np.arange(cenX, cenX + refRange[0] * refARx[1], refInt[0])
-        xG = np.geomspace(
-            cenX + refRange[0] * refARx[1],
-            mesh.maxCoord[0],
-            mesh.elementRes[0] / 2.0 - xL.size + 1,
-        )
-        xLL = np.arange(cenX - refRange[0] * refARx[0], cenX, refInt[0])
-        xGG = np.geomspace(
-            cenX + refRange[0] * refARx[0],
-            mesh.maxCoord[0],
-            mesh.elementRes[0] / 2.0 - xLL.size + 1,
-        )
-        xGG = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xGG, axis=0)
-        xGG = np.delete(xGG, -1)
-
-        assert mesh.elementRes[0] / 2 - (xL.size + xG.size) == -1
-        xR = np.concatenate((xL, xG), axis=0)
-        xRR = np.concatenate((xGG, xLL), axis=0)
-        xR = np.concatenate((xRR, xR), axis=0)
-        assert mesh.elementRes[0] + 1 - xR.size == 0
-
-    if refineVert:
-        yO = np.linspace(mesh.minCoord[1], mesh.maxCoord[1], mesh.elementRes[1] + 1)
-        yL = np.arange(mesh.maxCoord[1], mesh.maxCoord[1] + refRange[1], -refInt[1])
-        yG = np.geomspace(
-            mesh.maxCoord[1] + refRange[1], mesh.minCoord[1], yO.size - yL.size
-        )
-        # yG = np.linspace(mesh.maxCoord[1] + refRange[1],
-        #                  mesh.minCoord[1], yO.size - yL.size)
-        assert mesh.elementRes[1] + 1 - (yL.size + yG.size) == 0
-        yR = np.concatenate((yL, yG), axis=0)
-        yR = np.flip(yR, axis=0)  # -ve Coordinates silly hack for interp
-
-    mesh.reset()
-    uw.barrier()  # safeguard
-    # xM, yM = np.meshgrid(xR, yR)
-
-    with mesh.deform_mesh():
-        if refineHoriz:
-            mesh.data[:, 0] = np.interp(mesh.data[:, 0], xO, xR)
-        if refineVert:
-            mesh.data[:, 1] = np.interp(mesh.data[:, 1], yO, yR)
-    uw.barrier()  # safeguard
-    # setupStore.step = 1
-    # figMesh.save()
-    # figMesh.save(outputDir + "/MesHRef.png")
-
-    if uw.rank() == 0:
-        print("Deforming Mesh......Done!")
+# if restartFlag is False:
+#     if uw.rank() == 0:
+#         print("Deforming Mesh.....!")
+#
+#     # if refineHoriz:
+#     #     xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
+#     #     cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
+#     #     xL = np.arange(cenX, cenX + refRange[0] / 2.0, refInt[0])
+#     #     xG = np.geomspace(
+#     #         cenX + refRange[0] / 2,
+#     #         mesh.maxCoord[0],
+#     #         mesh.elementRes[0] / 2.0 - xL.size + 1,
+#     #     )
+#     #     # xG = np.linspace(
+#     #     #     cenX + refRange[0]/2, mesh.maxCoord[0], mesh.elementRes[0]/2. - xL.size+1)
+#     #     assert mesh.elementRes[0] / 2 - (xL.size + xG.size) == -1
+#     #     xR = np.concatenate((xL, xG), axis=0)
+#     #     xrF = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xR, axis=0)
+#     #     xR = np.concatenate((xrF, xR), axis=0)
+#     #     xR = np.delete(xR, xR.size / 2)
+#     #     assert mesh.elementRes[0] + 1 - xR.size == 0
+#     if refineHoriz:
+#         xO = np.linspace(mesh.minCoord[0], mesh.maxCoord[0], mesh.elementRes[0] + 1)
+#         cenX = (mesh.maxCoord[0] - mesh.minCoord[0]) / 2
+#         xL = np.arange(cenX, cenX + refRange[0] * refARx[1], refInt[0])
+#         xG = np.geomspace(
+#             cenX + refRange[0] * refARx[1],
+#             mesh.maxCoord[0],
+#             mesh.elementRes[0] / 2.0 - xL.size + 1,
+#         )
+#         xLL = np.arange(cenX - refRange[0] * refARx[0], cenX, refInt[0])
+#         xGG = np.geomspace(
+#             cenX + refRange[0] * refARx[0],
+#             mesh.maxCoord[0],
+#             mesh.elementRes[0] / 2.0 - xLL.size + 1,
+#         )
+#         xGG = np.flip((mesh.maxCoord[0] - mesh.minCoord[0]) - xGG, axis=0)
+#         xGG = np.delete(xGG, -1)
+#
+#         assert mesh.elementRes[0] / 2 - (xL.size + xG.size) == -1
+#         xR = np.concatenate((xL, xG), axis=0)
+#         xRR = np.concatenate((xGG, xLL), axis=0)
+#         xR = np.concatenate((xRR, xR), axis=0)
+#         assert mesh.elementRes[0] + 1 - xR.size == 0
+#
+#     if refineVert:
+#         yO = np.linspace(mesh.minCoord[1], mesh.maxCoord[1], mesh.elementRes[1] + 1)
+#         yL = np.arange(mesh.maxCoord[1], mesh.maxCoord[1] + refRange[1], -refInt[1])
+#         yG = np.geomspace(
+#             mesh.maxCoord[1] + refRange[1], mesh.minCoord[1], yO.size - yL.size
+#         )
+#         # yG = np.linspace(mesh.maxCoord[1] + refRange[1],
+#         #                  mesh.minCoord[1], yO.size - yL.size)
+#         assert mesh.elementRes[1] + 1 - (yL.size + yG.size) == 0
+#         yR = np.concatenate((yL, yG), axis=0)
+#         yR = np.flip(yR, axis=0)  # -ve Coordinates silly hack for interp
+#
+#     mesh.reset()
+#     uw.barrier()  # safeguard
+#     # xM, yM = np.meshgrid(xR, yR)
+#
+#     with mesh.deform_mesh():
+#         if refineHoriz:
+#             mesh.data[:, 0] = np.interp(mesh.data[:, 0], xO, xR)
+#         if refineVert:
+#             mesh.data[:, 1] = np.interp(mesh.data[:, 1], yO, yR)
+#     uw.barrier()  # safeguard
+#     # setupStore.step = 1
+#     # figMesh.save()
+#     # figMesh.save(outputDir + "/MesHRef.png")
+#
+#     if uw.rank() == 0:
+#         print("Deforming Mesh......Done!")
 
 velocityField = mesh.add_variable(nodeDofCount=mesh.dim)
 pressureField = mesh.subMesh.add_variable(nodeDofCount=1)
-
+defaultSRInv = nd(1e-18 / u.second)
+strainRate = fn.tensor.symmetric(velocityField.fn_gradient)
+strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
+projVisc = mesh.add_variable(1)
 uw.barrier()  # Just to be safe that all the vars sync
 
 # SO MUCH FOR A MONOLITHIC FILE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! people dont care about good modular code? why should I.
@@ -283,6 +286,7 @@ uw.barrier()  # Just to be safe that all the vars sync
 # Separating these only because these two take significantly different time, faster swarm loads = LoL!
 step
 
+
 def load_mesh_vars(step):
     if uw.rank() == 0:
         print("Loading Mesh.....")
@@ -290,21 +294,100 @@ def load_mesh_vars(step):
     mesh.load(outputDir + "/mesh.00000.h5")
     velocityField.load(outputDir + "velocity-" + str(step).zfill(5) + ".h5")
     pressureField.load(outputDir + "pressure-" + str(step).zfill(5) + ".h5")
+    projVisc.load(outputDir + "meshViscosity-" + str(step).zfill(5) + ".h5")
+
     if uw.rank() == 0:
         print("Loading Mesh......Done!")
-    return mesh.save(outputDir + "mesh.00000.h5")
+    # return mesh.save(outputDir + "mesh.00000.h5")
     # return uw.utils.SavedFileData(mh, outputDir+'/mesh.00000.h5')
+
+def checkpoint(
+    mesh,
+    fieldDict,
+    swarm,
+    swarmDict,
+    index,
+    modeltime=None,
+    meshName="mesh",
+    swarmName="swarm",
+    prefix="./",
+    enable_xdmf=True,
+):
+    # Check the prefix is valid
+    if prefix is not None:
+        if not prefix.endswith("/"):
+            prefix += "/"  # add a backslash
+        if not os.path.exists(prefix) and uw.rank() == 0:
+            print("Creating directory: ", prefix)
+            os.makedirs(prefix)
+
+    uw.barrier()
+
+    if not isinstance(index, int):
+        raise TypeError("'index' is not of type int")
+    if modeltime is not None:
+        time = modeltime
+    else:
+        time = index
+
+    ii = str(index).zfill(5)
+
+    if mesh is not None:
+
+        # Error check the mesh and fields
+        if not isinstance(mesh, uw.mesh.FeMesh):
+            raise TypeError("'mesh' is not of type uw.mesh.FeMesh")
+        if not isinstance(fieldDict, dict):
+            raise TypeError("'fieldDict' is not of type dict")
+        for key, value in fieldDict.iteritems():
+            if not isinstance(value, uw.mesh.MeshVariable):
+                raise TypeError(
+                    "'fieldDict' must contain uw.mesh.MeshVariable elements"
+                )
+
+        # see if we have already saved the mesh. It only needs to be saved once
+        if not hasattr(checkpoint, "mH"):
+            checkpoint.mH = mesh.save(prefix + meshName + ".h5")
+        mh = checkpoint.mH
+
+        for key, value in fieldDict.iteritems():
+            filename = prefix + key + "-" + ii
+            handle = value.save(filename + ".h5")
+            if enable_xdmf:
+                value.xdmf(filename, handle, key, mh, meshName, modeltime=time)
+
+    # is there a swarm
+    if swarm is not None:
+
+        # Error check the swarms
+        if not isinstance(swarm, uw.swarm.Swarm):
+            raise TypeError("'swarm' is not of type uw.swarm.Swarm")
+        if not isinstance(swarmDict, dict):
+            raise TypeError("'swarmDict' is not of type dict")
+        for key, value in swarmDict.iteritems():
+            if not isinstance(value, uw.swarm.SwarmVariable):
+                raise TypeError(
+                    "'fieldDict' must contain uw.swarm.SwarmVariable elements"
+                )
+
+        sH = swarm.save(prefix + swarmName + "-" + ii + ".h5")
+        for key, value in swarmDict.iteritems():
+            filename = prefix + key + "-" + ii
+            handle = value.save(filename + ".h5")
+            if enable_xdmf:
+                value.xdmf(filename, handle, key, sH,
+                           swarmName, modeltime=time)
 
 #***Postproc Stress Here***
 if restartFlag is True:
-    meshHnd = load_mesh_vars(step=rstep)
+    load_mesh_vars(25)
 # define the viscosity Range
 viscRange = [1e-1, 1e5]
-rstep=3600
-step=rstep
+# rstep = 3600
+step = rstep
 
-meshHnd = load_mesh_vars(step=rstep)
 print("done")
+
 
 def viscosity_limit(viscosityFn, viscosityRange=viscRange):
     return fn.misc.max(viscosityRange[0], fn.misc.min(viscosityRange[1], viscosityFn))
@@ -312,57 +395,144 @@ def viscosity_limit(viscosityFn, viscosityRange=viscRange):
 
 # the default strain rate Invariant used for the initial visc
 
-defaultSRInv = nd(1e-18 / u.second)
-strainRate = fn.tensor.symmetric(velocityField.fn_gradient)
-strainRate_2ndInvariant = fn.tensor.second_invariant(strainRate)
-projVisc = mesh.add_variable(1)
-projVisc.load(outputDir + "meshViscosity-" + str(step).zfill(5) + ".h5")
 
-viscStress = (2.0 * projVisc * strainRate).evaluate(mesh)
+viscStress = 2.0 * projVisc * strainRate
+viscStress[0]
 
+sigmaXX = viscStress[:, 0]-pressureField
+sigmaYY = viscStress[:, 1]-pressureField
+sigmaXY = viscStress[:, 2]
 
-sigmaXX=viscStress[:,0]-pressureField
-sigmaYY=viscStress[:,1]-pressureField
-sigmaXY=viscStress[:,2]
-
-sigma=mesh.add_variable(3)
+sigma = mesh.add_variable(3)
+sigma.data[:] = viscStress.evaluate(mesh)
+sigma
+theta=0.5*fn.math.atan(sigma[2],(sigma[1]-sigma[0]))*180./np.pi
+theta
 # ss=np.stack((sigmaXX,sigmaYY,sigmaXY)).shape
 # print(ss)
-# sigma.shape
-# sigma.data[:]=
-sigmaXX.shape
-sigma.data[:]=np.stack((sigmaXX,sigmaYY,sigmaXY), axis=-1)
-
+# # sigma.shape
+# # sigma.data[:]=
+# sigmaXX.shape
+# sigma.data[:] = np.stack((sigmaXX, sigmaYY, sigmaXY), axis=-1)
+time=0
 dmTime
-dm(time,u.megayear)
+dm(time, u.megayear)
 checkpoint(
     mesh=mesh,
     fieldDict={"stress": sigma},
     swarm=None,
     swarmDict=None,
     index=step,
-    modeltime=dm(time,u.megayear).magnitude,
+    modeltime=dm(time, u.megayear).magnitude,
     prefix=outputDir,
 )
-
+viscStress[0].evaluate(mesh).shape
+pressureField.data.shape
 print("wait")
 figStress = glucifer.Figure(name="Stress", figsize=figSize, quality=3)
+dm(.025,u.megapascal)
 figStress.append(
     glucifer.objects.Surface(
         mesh,
-        sigmaXX-pressureField,
-        colours="coolwarm",
+        viscStress[0]-pressureField,
+        colours="blue green (0.0)yellow red back",
+        valueRange=[-.025, .025],
         onMesh=True,
-        valueRange=[-.1,.1]
+        # logScale=True      # colours=coldmorning.cm_data,
     )
 )
-figStress.show()
-
-figStress.show()
+# theta=0.5*fn.math.atan(tan2Theta)
+theta.evaluate(mesh)
+#
+# figStress.save("dd.png")
+# figStress = glucifer.Figure(name="Stress", figsize=figSize, quality=3)
+# figStress.append(
+#     glucifer.objects.Surface(
+#         mesh,
+#         viscStress[1],
+#         colours="c",
+#         # colours=coldmorning.cm_data,
+#         onMesh=True,
+#         valueRange=[-.02, .02],
+#     )
+# )
+figStress.save_image("001.png")
 
 figStress.show()
 # Being Very Explict about True and False!!!!!!
+store=None
+vdotv = fn.math.dot(velocityField, velocityField)
+np.max(vdotv.evaluate(mesh))
+np.min(vdotv.evaluate(mesh))
 
+figVelocityMag = glucifer.Figure(
+    store, figsize=figSize, name="Velocity Magnitude")
+# tokyo.cm_data.reverse()
+# vlike.cm_data.reverse()
+figVelocityMag.Surface(
+    mesh,
+    fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
+    valueRange=[0, 1e-3],
+    # logScale=True,
+    colours=vlike.cm_data,
+    # colours=tokyo.cm_data,
+    onMesh=True,
+)
+figVelocityMag.VectorArrows(
+    mesh,
+    velocityField,
+    length=0.04,
+    resolution=[64,20,2],
+    arrowhead=0.6,
+    colour="grey green",
+    # onMesh=True,
+    normalise=0.80,
+    radius=0.06,
+)
+figVelocityMag.show()
+figVelocityMag.Contours(mesh,vdotv,interval=1e-10, limits=(0.0, 1.e-8),onMesh=True)
+figVelocityMag.show()
+
+
+
+figPressure = glucifer.Figure(
+    store, figsize=figSize,  Name="Pressure Map")
+figPressure.Surface(mesh,
+                    pressureField,
+                    colours=glucifer.lavavu.matplotlib_colourmap("inferno_r"),
+                    onMesh=True)
+figStrainRate = glucifer.Figure(store, figsize=figSize, name="Strain Rate")
+figStrainRate.Surface(
+    mesh,
+    strainRate_2ndInvariant,
+    logScale=True,
+    valueRange=[1e-7, 1e-2],
+    # colours="cubelaw2",
+    colours=glucifer.lavavu.matplotlib_colourmap("viridis"),
+    onMesh=True,
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+########################################
 if restartFlag is False:
     velocityField.data[:] = [0.0, 0.0]
     pressureField.data[:] = 0.0
@@ -373,8 +543,10 @@ if restartFlag is True:
 
 # The Boundaries: "I'll stay awake cause the dark's not taking prisoners tonight"
 
-iWalls = mesh.specialSets["MinI_VertexSet"] + mesh.specialSets["MaxI_VertexSet"]
-jWalls = mesh.specialSets["MinJ_VertexSet"] + mesh.specialSets["MaxJ_VertexSet"]
+iWalls = mesh.specialSets["MinI_VertexSet"] + \
+    mesh.specialSets["MaxI_VertexSet"]
+jWalls = mesh.specialSets["MinJ_VertexSet"] + \
+    mesh.specialSets["MaxJ_VertexSet"]
 tWalls = mesh.specialSets["MaxJ_VertexSet"]
 
 freeslipBC = uw.conditions.DirichletCondition(
@@ -391,7 +563,8 @@ def load_swarm_vars(step):
     if uw.rank() == 0:
         print("Loading Swarm.....")
     swarm.load(outputDir + "swarm-" + str(step).zfill(5) + ".h5")
-    materialVariable.load(outputDir + "materials-" + str(step).zfill(5) + ".h5")
+    materialVariable.load(outputDir + "materials-"
+                          + str(step).zfill(5) + ".h5")
     swarm_popcontrol.repopulate()
     if uw.rank() == 0:
         print("Loading Swarm......Done!")
@@ -493,7 +666,8 @@ def checkpoint(
             filename = prefix + key + "-" + ii
             handle = value.save(filename + ".h5")
             if enable_xdmf:
-                value.xdmf(filename, handle, key, sH, swarmName, modeltime=time)
+                value.xdmf(filename, handle, key, sH,
+                           swarmName, modeltime=time)
 
 
 def make_slab2d(topX, topY, length, taper, dip, depth, thicknessArray):
@@ -509,7 +683,8 @@ def make_slab2d(topX, topY, length, taper, dip, depth, thicknessArray):
                 (topX + totalThickness / (np.tan(np.radians(taper))), d),
                 (topX + length, d),
                 (topX + length + depth / np.tan(np.radians(dip)), d - depth),
-                (topX + length + depth / np.tan(np.radians(dip)), d - depth - ts[i]),
+                (topX + length + depth
+                 / np.tan(np.radians(dip)), d - depth - ts[i]),
                 (topX + length, d - ts[i]),
                 (topX + totalThickness / np.tan(np.radians(taper)), d - ts[i]),
             ]
@@ -536,7 +711,8 @@ def make_Indentor2d(startX, topY, length, taper, thicknessArray, taper2=None):
                     startX + length + (d - ts[i]) / np.tan(np.radians(taper)),
                     topY + d - ts[i],
                 ],
-                [startX - (d - ts[i]) / np.tan(np.radians(taper2)), topY + d - ts[i]],
+                [startX - (d - ts[i]) / np.tan(np.radians(taper2)),
+                           topY + d - ts[i]],
             ]
         )
         d -= ts[i]
@@ -562,7 +738,8 @@ def make_overRidingPlate2d(topX, topY, length, taper, dip, thicknessArray):
                     topX + length + (ts[i] - d) / np.tan(np.radians(dip)),
                     topY - ts[i] + d,
                 ),
-                (topX + totalThickness / np.tan(np.radians(taper)), topY - ts[i] + d),
+                (topX + totalThickness
+                 / np.tan(np.radians(taper)), topY - ts[i] + d),
             ]
         )
         d -= ts[i]
@@ -940,7 +1117,8 @@ figParticle = glucifer.Figure(
     store, figsize=figSize, name="Materials", boundingBox=bBox
 )
 
-tab20 = list(glucifer.lavavu.matplotlib_colourmap("tab20")[0 : len(modelMaterials) - 1])
+tab20 = list(glucifer.lavavu.matplotlib_colourmap(
+    "tab20")[0: len(modelMaterials) - 1])
 len(tab20)
 figParticle.Points(
     swarm,
@@ -973,7 +1151,8 @@ viscosityMap = {
     else nd(mat["viscosity"])
     for (i, mat) in enumerate(modelMaterials)
 }
-viscosityMapFn = fn.branching.map(fn_key=materialVariable, mapping=viscosityMap)
+viscosityMapFn = fn.branching.map(
+    fn_key=materialVariable, mapping=viscosityMap)
 
 # figViscosity = glucifer.Figure(
 #     store, figsize=figSize,  name="Viscosity_Map", title="Viscosity_Map")
@@ -995,11 +1174,13 @@ viscosityMapFn = fn.branching.map(fn_key=materialVariable, mapping=viscosityMap)
 # figViscosity.save()
 
 projVisc = mesh.add_variable(1)
-projVisMesh = uw.utils.MeshVariable_Projection(projVisc, viscosityMapFn, type=0)
+projVisMesh = uw.utils.MeshVariable_Projection(
+    projVisc, viscosityMapFn, type=0)
 projVisMesh.solve()
 
 # vlike.cm_data.reverse()
-figViscosityMesh = glucifer.Figure(store, figsize=figSize, name="Viscosity Map")
+figViscosityMesh = glucifer.Figure(
+    store, figsize=figSize, name="Viscosity Map")
 figViscosityMesh.Surface(
     mesh,
     projVisc,
@@ -1015,7 +1196,8 @@ figViscosityMesh.Surface(
 # colours="Cyan Green ForestGreen Grey Orange Brown Blue Black")
 # figViscosityMesh.Mesh(mesh)
 
-figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(-1, 4, 6).tolist()
+figViscosityMesh.objects[0].colourBar["tickvalues"] = np.logspace(
+    -1, 4, 6).tolist()
 if restartFlag is False:
     figViscosityMesh.save(outputDir + "/ViscosityMesh_Initial_3")
 
@@ -1058,7 +1240,8 @@ figDensity.Points(
     colours="spectral",
 )
 
-figDensity.objects[0].colourBar["tickvalues"] = [2800, 2900, 3000, 3100, 3200, 3280]
+figDensity.objects[0].colourBar["tickvalues"] = [
+    2800, 2900, 3000, 3100, 3200, 3280]
 if restartFlag is False:
     figDensity.save(outputDir + "/Density_Initial")
 # figDensity.save()
@@ -1121,24 +1304,11 @@ solver.options.scr.use_previous_guess = True
 # solver.options.A11.ksp_monitor = 'ascii'
 # # solver.options.A11.ksp_converged_reason=''
 
-advector = uw.systems.SwarmAdvector(swarm=swarm, velocityField=velocityField, order=2)
+advector = uw.systems.SwarmAdvector(
+    swarm=swarm, velocityField=velocityField, order=2)
 
-vdotv = fn.math.dot(velocityField, velocityField)
-figVelocityMag = glucifer.Figure(store, figsize=figSize, name="Velocity Magnitude")
-# tokyo.cm_data.reverse()
-vlike.cm_data.reverse()
-figVelocityMag.Surface(
-    mesh,
-    fn.math.sqrt(fn.math.dot(velocityField, velocityField)),
-    valueRange=[0, 1e-3],
-    # logScale=True,
-    colours=vlike.cm_data,
-    # colours=tokyo.cm_data,
-    onMesh=True,
-)
-figVelocityMag.save()
 
-figStrainRate = glucifer.Figure(store, figsize=figSize, name="Strain Rate")
+
 figStrainRate.Surface(
     mesh,
     strainRate_2ndInvariant,
@@ -1148,20 +1318,12 @@ figStrainRate.Surface(
     colours=glucifer.lavavu.matplotlib_colourmap("viridis"),
     onMesh=True,
 )
-figStrainRate.objects[0].colourBar["tickvalues"] = [1e-7, 1e-5, 1e-4, 1e-3, 1e-2]
+figStrainRate.objects[0].colourBar["tickvalues"] = [
+    1e-7, 1e-5, 1e-4, 1e-3, 1e-2]
 if restartFlag is False:
     figStrainRate.save()
 
 # solver.solve(nonLinearIterate=False)
-
-# figPressure = glucifer.Figure(
-#     store, figsize=figSize,  Name="Pressure Map")
-# figPressure.Surface(mesh,
-#                     pressureField,
-#                     colours=glucifer.lavavu.matplotlib_colourmap("inferno_r"),
-#                     onMesh=True)
-# if restartFlag is False:
-#     figPressure.save()
 
 viscStress = 2.0 * viscosityMapFn * strainRate
 # figStress = glucifer.Figure(store, name="Stress", figsize=figSize, quality=3)
@@ -1185,8 +1347,10 @@ surfacePressureIntegral = uw.utils.Integral(
 
 # a callback function to calibrate the pressure - will pass to solver later
 NodePressure = uw.mesh.MeshVariable(mesh, nodeDofCount=1)
-Cell2Nodes = uw.utils.MeshVariable_Projection(NodePressure, pressureField, type=0)
-Nodes2Cell = uw.utils.MeshVariable_Projection(pressureField, NodePressure, type=0)
+Cell2Nodes = uw.utils.MeshVariable_Projection(
+    NodePressure, pressureField, type=0)
+Nodes2Cell = uw.utils.MeshVariable_Projection(
+    pressureField, NodePressure, type=0)
 
 
 def smooth_pressure():
@@ -1289,16 +1453,19 @@ if restartFlag is False:
         tracerSwarm.add_particles_with_coordinates(np.column_stack((xs, ys)))
     last = np.array(slabshapes)[-1, 0:-3]
 
-    indCoords = np.unique(np.concatenate(np.array(indentorshapes)[:, :, :]), axis=0)
+    indCoords = np.unique(np.concatenate(
+        np.array(indentorshapes)[:, :, :]), axis=0)
     inEp = np.split(indCoords, 2)
 
     for l, r in zip(inEp[0], np.flip(inEp[1], 0)):
-        xyS = np.stack((np.linspace(l[0], r[0], 1000), np.full((1000,), l[1])), axis=-1)
+        xyS = np.stack(
+            (np.linspace(l[0], r[0], 1000), np.full((1000,), l[1])), axis=-1)
         tracerSwarm.add_particles_with_coordinates(xyS)
     tip = slabshapes[0, 3], slabshapes[-1, -3]
     tracerSwarm.add_particles_with_coordinates(
         np.stack(
-            (np.full((500,), tip[0][0]), (np.linspace(tip[0][1], tip[-1][1], 500))),
+            (np.full((500,), tip[0][0]),
+             (np.linspace(tip[0][1], tip[-1][1], 500))),
             axis=-1,
         )
     )
@@ -1319,7 +1486,8 @@ if restartFlag is False:
         )
     )
 
-    overRiding = [np.array(overRidingShapesForeArc), np.array(overRidingShapes)]
+    overRiding = [np.array(overRidingShapesForeArc),
+                           np.array(overRidingShapes)]
     for i in overRiding:
         overInCoords = np.array(i)[:, 0:4]
         overfirst = np.insert(i[0, 0:-2], 0, i[-1][0], axis=0)
@@ -1328,7 +1496,8 @@ if restartFlag is False:
         for x in overInCoords:
             xs = np.linspace(np.min(x[:, 0]), np.max(x[:, 0]), 1000)
             ys = np.interp(xs, x[:, 0], x[:, 1])
-            tracerSwarm.add_particles_with_coordinates(np.column_stack((xs, ys)))
+            tracerSwarm.add_particles_with_coordinates(
+                np.column_stack((xs, ys)))
 
 uw.barrier()
 tracerVelocity = tracerSwarm.add_variable(dataType="double", count=2)
@@ -1345,7 +1514,7 @@ uw.barrier()
 # f.Points(tracerSwarm, pointsize=4)
 # f.save(outputDir + "/TracerInit")
 fieldDict = {
-    "velocity": velocityField,}
+    "velocity": velocityField, }
     "pressure": pressureField,
     "meshViscosity": projVisc,
 }
@@ -1359,9 +1528,9 @@ if restartFlag is False:
         fieldDict,
         swarm,
         swarmDict,
-        index=0,
-        modeltime=dm(time, 1.0 * u.megayear).magnitude,
-        prefix=outputDir,
+        index = 0,
+        modeltime = dm(time, 1.0 * u.megayear).magnitude,
+        prefix = outputDir,
     )
     checkpoint(
         None,
