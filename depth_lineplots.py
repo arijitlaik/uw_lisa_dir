@@ -36,37 +36,51 @@ scaling_coefficients["[time]"] = Kt.to_base_units()
 scaling_coefficients["[mass]"] = KM.to_base_units()
 
 
-dataCols = ["time", "velocity" "Depth" "Exp"]
+dataCols = ["time", "velocity", "type","Exp"]
 df = pd.DataFrame(columns=dataCols)
 # setPostFix = ["00", "00_a_indNB", "30", "30_hiSpEta", "50"]
 # setPostFix = ["50", "30", "00", "00_a_indNB", "00_a", "hiSpEta", "LRINDNB"]
-setPostFix = ["wtR8_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc","R8_utUc_eta0_1e3_Lc1e3_nlLM_1e15_sL"]
-opD = "./tracerPP/"
+setPostFix = ["wtR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc-NoSmooth",
+              "wtR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc"]
+opD = "tracerPP/"
 for i in setPostFix:
 
     #
     time = np.load(opD + i + "time.npy")
-    cBaseDepth = np.load(opD + i + "cdepth.npy")
-    cBaseDepth = dm(cBaseDepth, u.kilometer)
     t = dm(time[0:, 1], u.megayear)
-    trC = np.load(opD + i + "trc.npy")
-    trDx = trC[0:-1] - trC[1:]
-    dt = time[1:, 1] - time[0:-1, 1]
-    trDx = np.insert(trDx, 0, 0)
-    dt = np.insert(dt, 0, 1)
-    vt = trDx / dt
-    vt = dm(vt, u.centimeter / u.year)
-    # vsp = np.load(opD + setPrefix[n] + i + "vsp.npy")
+    # cBaseDepth = np.load(opD + i + "cdepth.npy")
+    # cBaseDepth = dm(cBaseDepth, u.kilometer)
 
-    _dft = pd.DataFrame(dict(time=t, velocity=vt, Depth=cBaseDepth, Exp="e0" + i))
+    # trC = np.load(opD + i + "trc.npy")
+    # trDx = trC[0:-1] - trC[1:]
+    # dt = time[1:, 1] - time[0:-1, 1]
+    # trDx = np.insert(trDx, 0, 0)
+    # dt = np.insert(dt, 0, 1)
+    # vt = trDx / dt
+    vt = np.load(opD +  i + "vt.npy")
+    vt = dm(-vt, u.centimeter / u.year)
+    vsp = np.load(opD +  i + "vsp.npy")
+    vsp = dm(vsp, u.centimeter / u.year)
 
+    _dft = pd.DataFrame(dict(time=t, velocity=vt, type="vt", Exp= i))
+    df = df.append(_dft)
+
+    # _dft = pd.DataFrame(dict(time=t, velocity=-vsp, type="vsp", Exp= i))
     df = df.append(_dft)
 # %matplotlib
 sns.set()
 
-sns.set_context("poster")
+# sns.set_context("poster")
 sns.set_style("whitegrid", {"grid.linestyle": "--", "grid.linewidth": 0.05})
-ax = sns.lineplot(x="time", y="Depth", hue="Exp", data=df)
+ax = sns.lineplot(x="time", y="velocity", hue="Exp", data=df)
+
+vt_diff
+# (df["Exp"] == "e030_hiSpEta")
+vt_diff = df[(df["Exp"] == "wtR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc-NoSmooth")]["velocity"] - df[(df["Exp"] == "wtR8_Den_VutUc_thDc_eta0_1e3_Lc1e3_nlLM_2dot5e15_sLc")]["velocity"]
+ax2 = sns.lineplot(df)
+import matplotlib.pyplot as plt
+%matplotlib
+plt.plot(vt_diff[:])
 ax.set_ylim(-360, -20)
 ax.set_xlim(50, 200)
 ax.figure.set_size_inches(25, 12)
@@ -93,7 +107,7 @@ sns.set_style("ticks", {"grid.linestyle": "--", "grid.linewidth": 0.05})
 # palette = sns.color_palette("mako_r", 6)
 # %matplotlib
 sns.set_palette("Set2")
-ax = sns.lineplot(x="time", y="velocity", hue="Exp", style="Type", data=dfc)
+ax = sns.lineplot(x="time", y="velocity", hue="Exp", style="type", data=df)
 ax.figure.set_size_inches(10.5, 10)
 ax.set_xlim(0, 200)
 sns.despine()
@@ -126,15 +140,15 @@ ax.set_ylabel("Velocity (cm/yr)")
 ax.figure.savefig("DrhoCC.pdf")
 ax.figure.savefig("DrhoCC.svg")
 
-
+%matplotlib
 df.to_csv("df.csv")
 ax.figure.show()
 # ax.errorbar()
 ax.clear()
 dfc = df[(df["Exp"] == "e030") | (df["Exp"] == "e030_hiSpEta")]
-dfc = dfc[(dfc["Type"] != "Convergence")]
+dfc = df[(df["type"] != "vsp")]
 sns.set_palette("Set2")
-ax = sns.lineplot(x="time", y="velocity", hue="Exp", style="Type", data=dfc)
+ax = sns.lineplot(x="time", y="velocity", hue="Exp", style="type", data=dfc)
 ax.figure.set_size_inches(12.5, 10)
 ax.set_xlim(0, 200)
 sns.despine()
