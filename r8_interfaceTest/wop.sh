@@ -26,7 +26,7 @@ echo 'UW_VERSION: '$IMAGE_VERSION
 
 echo "********** Run Started **********"
 
-srun -n 48 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python lm30.py
+srun -n 48 singularity exec --pwd $PWD $IMAGE_STORE/underworld2-$IMAGE_VERSION.simg  python wOP.py
 
 echo "********** XXXXXXXXXXX **********"
 
